@@ -3,6 +3,7 @@ Shader "Hidden/BlitMipLerp"
     Properties
     {
         _MainTex ("Source", 2D) = "white" {}  // ★★ 必须要声明
+        _MipLevel ("Mips Level", int) = 3
     }
     SubShader
     {

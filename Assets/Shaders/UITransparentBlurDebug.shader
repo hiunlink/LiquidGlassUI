@@ -3,7 +3,7 @@ Shader "UI/Debug/TransparentBlur"
     Properties
     {
         _MainTex ("(Unused UI mask)", 2D) = "white" {}
-        _BlurTex ("Background RT", 2D)     = "white" {}
+        //_BlurTex ("Background RT", 2D)     = "white" {}
         _Opacity("Opacity", Range(0,1)) = 0.6
         _MipLevel("Mip Level", Range(0,8)) = 2.0
     }
@@ -22,8 +22,8 @@ Shader "UI/Debug/TransparentBlur"
             #pragma fragment frag
             #include "UnityCG.cginc"
 
-            sampler2D _BlurTex;
-            float4 _BlurTex_TexelSize;
+            sampler2D _UI_BG;
+            float4 _UI_BG_TexelSize;
             float _Opacity;
             float _MipLevel;
 
@@ -69,7 +69,7 @@ Shader "UI/Debug/TransparentBlur"
 
             float4 frag(v2f i) : SV_Target
             {
-                float4 blurCol = SampleMip(_BlurTex, i.uvScreen, _MipLevel);
+                float4 blurCol = SampleMip(_UI_BG, i.uvScreen, _MipLevel);
                 blurCol.a = _Opacity;
                 return blurCol;
             }
