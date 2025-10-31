@@ -46,6 +46,15 @@ public class UIBGReplaceFeature : ScriptableRendererFeature
     public Settings settings = new Settings();
     ReplacePass _pass;
     public override void Create(){ _pass = new ReplacePass(settings); }
+
     public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData data)
-    { if (settings.replaceMaterial) renderer.EnqueuePass(_pass); }
+    {
+        // 忽略 SceneView 相机（避免拉伸或重复渲染）
+        if (data.cameraData.isSceneViewCamera)
+        {
+            // 如果希望 SceneView 中仍能显示 UI，可直接返回，不设置全局贴图
+            return;
+        }
+        if (settings.replaceMaterial) renderer.EnqueuePass(_pass);
+    }
 }

@@ -86,7 +86,7 @@ MonoBehaviour:
         m_Bits: 64
       isForeground: 0
       blur: 1
-      blurMip: 3.58
+      blurMip: 4.42
     - layer:
         serializedVersion: 2
         m_Bits: 128

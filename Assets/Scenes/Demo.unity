@@ -268,6 +268,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1024658029}
   - component: {fileID: 1024658030}
+  - component: {fileID: 1024658031}
   m_Layer: 6
   m_Name: BgCanvas
   m_TagString: Untagged
@@ -319,6 +320,20 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!114 &1024658031
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1024658028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc5a8c1cc48241b2a544890a67fb2d18, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  feature: {fileID: 1367173693722032479, guid: 264474623b4d69344bc078bd79ea79f7, type: 2}
+  checkInterval: 0
 --- !u!1 &1148132110
 GameObject:
   m_ObjectHideFlags: 0
@@ -815,6 +830,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1631823087}
   - component: {fileID: 1631823088}
+  - component: {fileID: 1631823089}
   m_Layer: 7
   m_Name: CharacterCanvas
   m_TagString: Untagged
@@ -866,6 +882,20 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!114 &1631823089
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1631823086}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc5a8c1cc48241b2a544890a67fb2d18, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  feature: {fileID: 1367173693722032479, guid: 264474623b4d69344bc078bd79ea79f7, type: 2}
+  checkInterval: 0
 --- !u!1 &1711317566
 GameObject:
   m_ObjectHideFlags: 0
@@ -895,12 +925,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 089a75a399da48fa81b3b1cb14c850e3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetCanvas: {fileID: 1938411903}
-  mainCamera: {fileID: 1901480891}
-  captureCamera: {fileID: 1879465592}
+  targetCanvas: {fileID: 0}
+  mainCamera: {fileID: 0}
+  captureCamera: {fileID: 0}
   captureLayer:
     serializedVersion: 2
-    m_Bits: 64
+    m_Bits: 0
   resolutionScale: 1
   captureOnDirtyOnly: 0
 --- !u!4 &1711317568
@@ -1280,7 +1310,7 @@ MonoBehaviour:
   m_RequiresOpaqueTextureOption: 2
   m_CameraType: 0
   m_Cameras: []
-  m_RendererIndex: -1
+  m_RendererIndex: 0
   m_VolumeLayerMask:
     serializedVersion: 2
     m_Bits: 1

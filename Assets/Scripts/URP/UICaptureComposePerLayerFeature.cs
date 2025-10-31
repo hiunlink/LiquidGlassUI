@@ -58,6 +58,12 @@ public class UICaptureComposePerLayerFeature : ScriptableRendererFeature
         public RenderPassEvent injectEvent = RenderPassEvent.BeforeRenderingTransparents;
     }
 
+    // -------------------- Runtime Cache --------------------
+    private bool _dirty = true;
+    public void SetDirty(bool v) => _dirty = v;
+    public bool IsDirty => _dirty;
+    
+    
     // ========== 通用绘制 Tag ==========
     private static List<ShaderTagId> k_DefaultTags = new List<ShaderTagId>();
 
@@ -264,8 +270,36 @@ public class UICaptureComposePerLayerFeature : ScriptableRendererFeature
 
     public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData data)
     {
+        // 忽略 SceneView 相机（避免拉伸或重复渲染）
+        if (data.cameraData.isSceneViewCamera)
+        {
+            var cam = data.cameraData.camera;
+            cam.cullingMask = -1; // 显示所有层
+            return;
+        }
         if (settings.layers == null || settings.layers.Length == 0) return;
 
+#if UNITY_EDITOR
+        // 在编辑器但未运行时强制每帧重绘
+        if (!Application.isPlaying)
+        {
+            _dirty = true;
+        }
+#endif
+        // --- 如果界面没变化并已有缓存，直接复用 ---
+        if (!_dirty && _baseCol != null)
+        {
+            Shader.SetGlobalTexture(_gid, _baseCol);
+            Shader.SetGlobalVector(_uvScaleId, new Vector4(
+                (float)_baseCol.rt.width / data.cameraData.cameraTargetDescriptor.width,
+                (float)_baseCol.rt.height / data.cameraData.cameraTargetDescriptor.height,
+                0, 0));
+            return;
+        }
+        
+        // --- 继续执行完整渲染 ---
+        _dirty = false; // 渲染后标记为“干净”
+        
         tempPasses.Clear();
 
         var camDesc = data.cameraData.cameraTargetDescriptor;
