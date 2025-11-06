@@ -11,6 +11,13 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.Experimental.Rendering;
 
+// 顶部：增加枚举与材质引用
+public enum BlurAlgorithm
+{
+    MipChain,          // 使用 MIP 链（UIBGCompositeStencilMip）
+    GaussianSeparable  // 高斯分离（H+V）
+}
+
 public class UICaptureComposePerLayerFeature : ScriptableRendererFeature
 {
     // ========== 可配置结构 ==========
@@ -44,12 +51,24 @@ public class UICaptureComposePerLayerFeature : ScriptableRendererFeature
 
         [Header("清屏颜色")]
         public Color clearColor = new Color(0, 0, 0, 0);
+        
+        [Header("模糊算法")]
+        public BlurAlgorithm blurAlgorithm = BlurAlgorithm.MipChain;
+
+        [Header("MIP 链合成材质（必须内置 Stencil NotEqual）")]
+        public Material mipCompositeMat; // e.g. Hidden/UIBGCompositeStencilMip
+
+        [Header("Gaussian 模糊材质（H/V 两个pass）")]
+        public Material gaussianSeparableMat; // e.g. Hidden/UIBG_GaussianSeparable
+
+        [Header("Gaussian 合成 Copy 材质（必须内置 Stencil NotEqual）")]
+        public Material gaussianCompositeMat; // e.g. Hidden/UIBGCompositeCopyStencil
+
+        [Header("Gaussian Sigma")]
+        [Range(0f, 6f)] public float gaussianSigma = 2.0f;
 
         [Header("按从远到近排序（config[0] 最底层）")]
         public LayerConfig[] layers;
-
-        [Header("合成材质（Hidden/UIBGCompositeStencilMip，支持 _SourceTex/_Mip）")]
-        public Material compositeMat;
 
         [Header("是否生成 MIP（对 blurRT 以及最终 baseRT 均生效）")]
         public bool generateMips = true;
@@ -254,8 +273,12 @@ public class UICaptureComposePerLayerFeature : ScriptableRendererFeature
     
     public override void Create()
     {
-        if (settings.compositeMat == null)
-            settings.compositeMat = new Material(Shader.Find("Hidden/UIBGCompositeStencilMip"));
+        if (settings.mipCompositeMat == null)
+            settings.mipCompositeMat = new Material(Shader.Find("Hidden/UIBGCompositeStencilMip"));
+        if (settings.gaussianSeparableMat == null)
+            settings.gaussianSeparableMat = new Material(Shader.Find("Hidden/UIBG_GaussianSeparable"));
+        if (settings.gaussianCompositeMat == null)
+            settings.gaussianCompositeMat = new Material(Shader.Find("Hidden/UIBGCompositeCopyStencil"));
 
         _gid = Shader.PropertyToID(settings.globalTextureName);
         _uvScaleId = Shader.PropertyToID("_UIBG_UVScale");
@@ -273,8 +296,6 @@ public class UICaptureComposePerLayerFeature : ScriptableRendererFeature
         // 忽略 SceneView 相机（避免拉伸或重复渲染）
         if (data.cameraData.isSceneViewCamera)
         {
-            var cam = data.cameraData.camera;
-            cam.cullingMask = -1; // 显示所有层
             return;
         }
         if (settings.layers == null || settings.layers.Length == 0) return;
@@ -330,7 +351,7 @@ public class UICaptureComposePerLayerFeature : ScriptableRendererFeature
 
             _baseCol = RTHandles.Alloc(col, FilterMode.Bilinear, name: settings.globalTextureName);
             _baseDS  = RTHandles.Alloc(ds,  name: settings.globalTextureName+"_DS");
-            _blurRT  = RTHandles.Alloc(blur,FilterMode.Bilinear, name: settings.globalTextureName+"_BLUR");
+            _blurRT  = RTHandles.Alloc(blur,FilterMode.Bilinear, name: settings.globalTextureName+"_BLUR", wrapMode: TextureWrapMode.Clamp);
         }
 
         // 清 base / blur
@@ -364,77 +385,89 @@ public class UICaptureComposePerLayerFeature : ScriptableRendererFeature
             p.SetupTargets(_baseCol, _baseDS);
             tempPasses.Add(p);
         }
-        
+
         for (int j = 0; j < layers.Length; j++)
         {
             var config = layers[j];
             var fgColRT = config.blur ? _blurRT : _baseCol;
             var fgDepthRT = config.blur ? null : _baseDS;
 
+            // 模糊层是否叠加
             if (config.blur)
             {
-                // P2：该层 → blurRT（不做模板）
-                {
-                    var clear = new OneShot(CmdClearRT(_blurRT), evt);
-                    tempPasses.Add(clear);
-                    evt++;
-
-                    ScriptableRenderPass renderPass;
-                    if (config.isForeground) 
-                        renderPass = RenderForeground(fgColRT, fgDepthRT, j, layers, evt);
-                    else
-                    {
-                        var p2 = new DrawDefaultPass($"B.BlurCollect[{j}]→blurRT", evt, config.layer,
-                            useStencilNotEqual1: false);
-                        p2.SetupTargets(_blurRT, null); // 仅颜色附件
-                        renderPass = p2;
-                    }
-                    
-                    tempPasses.Add(renderPass);
-                    evt++;
-                }
-
-                // P3：blurRT 生成 MIP
-                {
-                    var p3 = new GenMipsPass($"B.Mips[{j}](blurRT)", evt);
-                    p3.Setup(_blurRT, settings.generateMips);
-                    tempPasses.Add(p3);
-                    evt++;
-                }
-
-                // P4：blurRT(LOD=L.blurMip) 合成回 baseRT（此时带 NotEqual 1）
-                {
-                    // 用一个内嵌合成 pass + 外围 NotEqual 包裹的方式：
-                    // 这里直接在合成材质里画全屏三角形，不方便外包 RenderStateBlock，
-                    // 所以我们采用一个“先画蒙版再画合成”的替代：直接使用合成 Pass，
-                    // 并确保前面背景/人物已正确写入模板，遮住前景背部。
-                    // （若需要严格 NotEqual 强制，可改为先画一个透明全屏Mesh并在材质里写 Stencil 块）
-                    var p4 = new CompositeBlurToBasePass($"B.CompositeBlur[{j}]→base", evt, settings.compositeMat,
-                        config.blurMip, UseStencilClip(j, layers));
-                    p4.SetSource(_blurRT);
-                    p4.SetupTargets(_baseCol, _baseDS);
-                    tempPasses.Add(p4);
-                    evt++;
-                }
-            }
-            else
-            {
-                if (config.isForeground)
-                {
-                    tempPasses.Add(RenderForeground(fgColRT,fgDepthRT, j, layers, evt));
-                }
-                else
-                {
-                    // P5：非模糊层 → 直接画到 baseRT（NotEqual 1）
-                    var p5 = new DrawDefaultPass($"B.NonBlur[{j}]→base(NotEqual1)", evt, config.layer,
-                        useStencilNotEqual1: true);
-                    p5.SetupTargets(_baseCol, _baseDS);
-                    tempPasses.Add(p5);
-                }
-                
+                var clear = new OneShot(CmdClearRT(_blurRT), evt);
+                tempPasses.Add(clear);
                 evt++;
             }
 
+            // Draw layer
+            if (config.isForeground)
+            {
+                tempPasses.Add(RenderForeground(fgColRT, fgDepthRT, j, layers, evt));
+            }
+            else
+            {
+                // 非模糊层 → 直接画到 baseRT（NotEqual 1）
+                // 模糊层 → 直接画到 baseRT （Full）
+                var p5 = new DrawDefaultPass($"B.NonBlur[{j}]→base(NotEqual1)", evt, config.layer,
+                    useStencilNotEqual1: !config.blur);
+                p5.SetupTargets(fgColRT, fgDepthRT);
+                tempPasses.Add(p5);
+            }
+            evt++;
+
+            bool useStencilNotEqual = UseStencilClip(j, layers); 
+            int  stencilVal = 1;
+            // 模糊算法
+            if (config.blur)
+            {
+                switch (settings.blurAlgorithm)
+                {
+                    case BlurAlgorithm.MipChain:
+                    {
+                        // 使用 MIP 链
+                        var p = new UIEffects.Passes.MipChainBlurPass(
+                            tag: $"B[{j}].MipChain",
+                            injectEvent: evt,
+                            srcRT: _blurRT,
+                            baseCol: _baseCol,
+                            baseDS: _baseDS,
+                            compositeMat: new Material(settings.mipCompositeMat),
+                            mipLevel: config.blurMip, 
+                            useStencilNotEqual,
+                            stencilVal,
+                            true
+                        );
+                        tempPasses.Add(p);
+                        evt++;
+                        break;
+                    }
+                    case BlurAlgorithm.GaussianSeparable:
+                    {
+                        // 使用高斯分离（需要一个 ping-pong 中间RT）
+                        EnsureGaussianPingPongRT(out var tmpRT, out var dstRT); // 你实现：尺寸同 blurRT
+
+                        var p = new UIEffects.Passes.GaussianBlurPass(
+                            tagPrefix: $"B[{j}].Gaussian",
+                            injectEvent: evt ,
+                            srcRT: _blurRT, // 采集放到 blurRT 复用
+                            tmpRT: tmpRT,
+                            dstRT: dstRT,
+                            baseCol: _baseCol,
+                            baseDS: _baseDS,
+                            gaussianSeparableMat: new Material(settings.gaussianSeparableMat),
+                            compositeCopyMat: new Material(settings.gaussianCompositeMat),
+                            sigma: settings.gaussianSigma, 
+                            0f,
+                            useStencilNotEqual,
+                            stencilVal
+                        );
+                        tempPasses.Add(p);
+                        evt++;
+                        break;
+                    }
+                }
+            }
         }
 
         // ---------- Phase M：最终 baseRT 也要有 MIP ----------
@@ -507,6 +540,28 @@ public class UICaptureComposePerLayerFeature : ScriptableRendererFeature
         }
 
         return renderPass;
+    }
+    
+    RTHandle _gaussTmp, _gaussDst;
+    void EnsureGaussianPingPongRT(out RTHandle tmpRT, out RTHandle dstRT)
+    {
+        int w = _blurRT.rt.width;
+        int h = _blurRT.rt.height;
+
+        if (_gaussTmp == null || _gaussTmp.rt.width != w || _gaussTmp.rt.height != h)
+        {
+            _gaussTmp?.Release();
+            _gaussDst?.Release();
+
+            var desc = _blurRT.rt.descriptor;
+            desc.useMipMap = false;
+            desc.autoGenerateMips = false;
+
+            _gaussTmp = RTHandles.Alloc(desc, FilterMode.Bilinear, name: "_UI_BG_GaussTmp", wrapMode: TextureWrapMode.Clamp);
+            _gaussDst = RTHandles.Alloc(desc, FilterMode.Bilinear, name: "_UI_BG_GaussDst", wrapMode: TextureWrapMode.Clamp);
+        }
+        tmpRT = _gaussTmp;
+        dstRT = _gaussDst;
     }
 
     class OneShot : ScriptableRenderPass

@@ -77,23 +77,29 @@ MonoBehaviour:
   m_Active: 1
   settings:
     globalTextureName: _UI_BG
-    resolutionScale: 0.718
+    resolutionScale: 0.7
     useHDR: 0
     clearColor: {r: 0, g: 0, b: 0, a: 0}
+    blurAlgorithm: 0
+    mipCompositeMat: {fileID: 2100000, guid: b12a18e8d2e846649bcfb6209315cdae, type: 2}
+    gaussianSeparableMat: {fileID: 2100000, guid: 757cea730e8269a4b81e93441a9d3822,
+      type: 2}
+    gaussianCompositeMat: {fileID: 2100000, guid: 183111268488cc1418e32301fb4ddffc,
+      type: 2}
+    gaussianSigma: 2
     layers:
     - layer:
         serializedVersion: 2
         m_Bits: 64
       isForeground: 0
       blur: 1
-      blurMip: 4.42
+      blurMip: 2.9
     - layer:
         serializedVersion: 2
         m_Bits: 128
       isForeground: 1
       blur: 0
       blurMip: 0
-    compositeMat: {fileID: 2100000, guid: b12a18e8d2e846649bcfb6209315cdae, type: 2}
     generateMips: 1
     injectEvent: 400
 --- !u!114 &6576797754651316054

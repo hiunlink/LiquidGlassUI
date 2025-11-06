@@ -42,6 +42,7 @@ public class UIBGReplaceFeature : ScriptableRendererFeature
             CommandBufferPool.Release(cmd);
         }
     }
+    
 
     public Settings settings = new Settings();
     ReplacePass _pass;
