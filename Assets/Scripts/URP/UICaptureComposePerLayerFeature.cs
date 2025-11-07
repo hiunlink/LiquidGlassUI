@@ -11,7 +11,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.Experimental.Rendering;
 
-// 顶部：增加枚举与材质引用
+// 模糊算法
 public enum BlurAlgorithm
 {
     MipChain,          // 使用 MIP 链（UIBGCompositeStencilMip）
@@ -33,8 +33,15 @@ public class UICaptureComposePerLayerFeature : ScriptableRendererFeature
         [Tooltip("该层是否需要模糊（blurRT→MIP→按本层blurMip合成回base）")]
         public bool blur = false;
 
-        [Tooltip("该层在合成回base时所用的 MIP 等级（仅对 blur=true 层生效）")]
+        
+        [ShowIf("blur")]
+        public BlurAlgorithm blurAlgorithm = BlurAlgorithm.MipChain;
+        [ShowIf("blur","blurAlgorithm", (int)BlurAlgorithm.MipChain)]
         [Range(0, 8)] public float blurMip = 3;
+        [ShowIf("blur","blurAlgorithm", (int)BlurAlgorithm.GaussianSeparable)]
+        [Range(0f, 6f)] public float gaussianSigma = 2.0f;
+        [ShowIf("blur","blurAlgorithm", (int)BlurAlgorithm.GaussianSeparable)]
+        [Range(1, 5)] public int iteration = 1;
     }
 
     [System.Serializable]
@@ -52,9 +59,6 @@ public class UICaptureComposePerLayerFeature : ScriptableRendererFeature
         [Header("清屏颜色")]
         public Color clearColor = new Color(0, 0, 0, 0);
         
-        [Header("模糊算法")]
-        public BlurAlgorithm blurAlgorithm = BlurAlgorithm.MipChain;
-
         [Header("MIP 链合成材质（必须内置 Stencil NotEqual）")]
         public Material mipCompositeMat; // e.g. Hidden/UIBGCompositeStencilMip
 
@@ -63,9 +67,6 @@ public class UICaptureComposePerLayerFeature : ScriptableRendererFeature
 
         [Header("Gaussian 合成 Copy 材质（必须内置 Stencil NotEqual）")]
         public Material gaussianCompositeMat; // e.g. Hidden/UIBGCompositeCopyStencil
-
-        [Header("Gaussian Sigma")]
-        [Range(0f, 6f)] public float gaussianSigma = 2.0f;
 
         [Header("按从远到近排序（config[0] 最底层）")]
         public LayerConfig[] layers;
@@ -421,7 +422,7 @@ public class UICaptureComposePerLayerFeature : ScriptableRendererFeature
             // 模糊算法
             if (config.blur)
             {
-                switch (settings.blurAlgorithm)
+                switch (config.blurAlgorithm)
                 {
                     case BlurAlgorithm.MipChain:
                     {
@@ -457,11 +458,12 @@ public class UICaptureComposePerLayerFeature : ScriptableRendererFeature
                             baseDS: _baseDS,
                             gaussianSeparableMat: new Material(settings.gaussianSeparableMat),
                             compositeCopyMat: new Material(settings.gaussianCompositeMat),
-                            sigma: settings.gaussianSigma, 
+                            sigma: config.gaussianSigma, 
                             0f,
                             useStencilNotEqual,
                             stencilVal
                         );
+                        p.Setup(config.iteration, config.gaussianSigma);
                         tempPasses.Add(p);
                         evt++;
                         break;

@@ -21,6 +21,7 @@
             SAMPLER(sampler_SourceTex);
             float4 _TexelSize;
             float _Sigma;
+            float _MipMap;
 
             struct v2f { float4 pos:SV_POSITION; float2 uv:TEXCOORD0; };
 
@@ -36,15 +37,15 @@
 
             half4 frag(v2f i):SV_Target
             {
-                float w = _TexelSize.x;
+                float w = _TexelSize.x*pow(2, _MipMap);
                 half4 sum = 0;
-                const int TAP=5;
+                const int TAP=3;
                 half total=0;
                 for(int k=-TAP;k<=TAP;k++)
                 {
                     half g=gaussian(k);
                     total+=g;
-                    sum+=SAMPLE_TEXTURE2D(_SourceTex,sampler_SourceTex,i.uv+float2(k*w,0))*g;
+                    sum+=SAMPLE_TEXTURE2D_LOD(_SourceTex,sampler_SourceTex,i.uv+float2(k*w,0), _MipMap)*g;
                 }
                 return sum/total;
             }
@@ -68,6 +69,7 @@
             SAMPLER(sampler_SourceTex);
             float4 _TexelSize;
             float _Sigma;
+            float _MipMap;
 
             struct v2f { float4 pos:SV_POSITION; float2 uv:TEXCOORD0; };
 
@@ -83,15 +85,15 @@
 
             half4 frag(v2f i):SV_Target
             {
-                float h=_TexelSize.y;
+                float h=_TexelSize.y*pow(2, _MipMap);
                 half4 sum=0;
-                const int TAP=5;
+                const int TAP=3;
                 half total=0;
                 for(int k=-TAP;k<=TAP;k++)
                 {
                     half g=gaussian(k);
                     total+=g;
-                    sum+=SAMPLE_TEXTURE2D(_SourceTex,sampler_SourceTex,i.uv+float2(0,k*h))*g;
+                    sum+=SAMPLE_TEXTURE2D_LOD(_SourceTex,sampler_SourceTex,i.uv+float2(0,k*h), _MipMap)*g;
                 }
                 return sum/total;
             }

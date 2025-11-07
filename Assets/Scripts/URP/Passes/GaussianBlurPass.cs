@@ -36,7 +36,8 @@ namespace UIEffects.Passes
         Material _gaussianHorMat;
         readonly Material _compositeMat;
 
-        private readonly int _iteration = 4;
+        private int _iteration = 1;
+        private float _mipMap = 0;
         readonly float _sigma;         // 连续可调
         readonly float _tinyThreshold; // 小阈值（<= 则跳过模糊）
 
@@ -46,6 +47,7 @@ namespace UIEffects.Passes
         static readonly int _SourceTex  = Shader.PropertyToID("_SourceTex");
         static readonly int _TexelSize  = Shader.PropertyToID("_TexelSize");
         static readonly int _Sigma      = Shader.PropertyToID("_Sigma");
+        static readonly int _MipMap      = Shader.PropertyToID("_MipMap");
         static readonly int _StencilRef = Shader.PropertyToID("_StencilRef");
 
         public GaussianBlurPass(
@@ -84,6 +86,12 @@ namespace UIEffects.Passes
             _useStencilNotEqual = useStencilNotEqual;
             _stencilVal         = Mathf.Clamp(stencilVal, 0, 255);
         }
+
+        public void Setup(int iteration, float mipMap)
+        {
+            _iteration = iteration;
+            _mipMap = mipMap;
+        }
         
 
         public override void Execute(ScriptableRenderContext ctx, ref RenderingData data)
@@ -95,6 +103,15 @@ namespace UIEffects.Passes
             int w = _srcRT.rt.width;
             int h = _srcRT.rt.height;
 
+            // 生成mipMap
+            if (_mipMap > 0)
+            {
+                var g = CommandBufferPool.Get(_tagComposite + ".GenMips");
+                g.GenerateMips(_srcRT);
+                ctx.ExecuteCommandBuffer(g);
+                CommandBufferPool.Release(g);
+            }
+            
             // 选择要合成的输入贴图：sigma 很小时跳过 H/V
             Texture blurInputTex = _srcRT;
             for (int it = 0; it < _iteration; it++)
@@ -108,6 +125,7 @@ namespace UIEffects.Passes
                     _gaussianHorMat.SetTexture(_SourceTex, blurInputTex);
                     _gaussianHorMat.SetVector(_TexelSize, new Vector4(1.0f / w, 1.0f / h, 0, 0));
                     _gaussianHorMat.SetFloat(_Sigma, _sigma);
+                    _gaussianHorMat.SetFloat(_MipMap, _mipMap);
                     cmdH.DrawProcedural(Matrix4x4.identity, _gaussianHorMat, 0, MeshTopology.Triangles, 3,
                         1); // pass 0 = H
                     ctx.ExecuteCommandBuffer(cmdH);
@@ -120,6 +138,7 @@ namespace UIEffects.Passes
                     _gaussianVertMat.SetTexture(_SourceTex, _tmpRT);
                     _gaussianVertMat.SetVector(_TexelSize, new Vector4(1.0f / w, 1.0f / h, 0, 0));
                     _gaussianVertMat.SetFloat(_Sigma, _sigma);
+                    _gaussianVertMat.SetFloat(_MipMap, _mipMap);
                     cmdV.DrawProcedural(Matrix4x4.identity, _gaussianVertMat, 1, MeshTopology.Triangles, 3,
                         1); // pass 1 = V
                     ctx.ExecuteCommandBuffer(cmdV);

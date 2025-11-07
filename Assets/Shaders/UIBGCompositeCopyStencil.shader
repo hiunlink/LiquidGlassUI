@@ -10,7 +10,7 @@
             ZWrite Off
             ZTest Always
             Cull Off
-            Blend One Zero
+            Blend SrcAlpha OneMinusSrcAlpha
 
             HLSLPROGRAM
             #pragma vertex vert
@@ -39,7 +39,7 @@
             ZWrite Off
             ZTest Always
             Cull Off
-            Blend One Zero
+            Blend SrcAlpha OneMinusSrcAlpha
 
             HLSLPROGRAM
             #pragma vertex vert
