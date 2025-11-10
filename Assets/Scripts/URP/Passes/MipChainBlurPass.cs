@@ -2,7 +2,7 @@
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-namespace UIEffects.Passes
+namespace URP.Passes
 {
     /// <summary>
     /// MIP 链模糊合成（不负责清屏 & 不负责采集层）。
@@ -18,17 +18,17 @@ namespace UIEffects.Passes
     {
         readonly string _tagComposite;
 
-        readonly RTHandle _srcRT;     // 来源（含 MIP）
-        readonly RTHandle _baseCol;   // 合成到此
-        readonly RTHandle _baseDS;    // 模板缓冲（用于合成材质内 Stencil）
-        readonly Material _compositeMat;
-        readonly float _mipLevel;
+        RTHandle _srcRT;     // 来源（含 MIP）
+        RTHandle _baseCol;   // 合成到此
+        RTHandle _baseDS;    // 模板缓冲（用于合成材质内 Stencil）
+        Material _compositeMat;
+        float _mipLevel;
 
-        readonly bool _useStencilNotEqual;
-        readonly int  _stencilVal;
+        bool _useStencilNotEqual;
+        int  _stencilVal;
 
         // 可选：是否在此 pass 内对 srcRT 生成 MIP（默认 false，推荐外部统一做）
-        readonly bool _generateMipsHere;
+        bool _generateMipsHere;
 
         static readonly int _SrcTex = Shader.PropertyToID("_SourceTex");
         static readonly int _Mip    = Shader.PropertyToID("_Mip");
@@ -36,23 +36,35 @@ namespace UIEffects.Passes
 
         public MipChainBlurPass(
             string tag,
-            RenderPassEvent injectEvent,
-            RTHandle srcRT,
-            RTHandle baseCol,
-            RTHandle baseDS,
-            Material compositeMat,
-            float mipLevel,
-            bool useStencilNotEqual,
-            int stencilVal,
-            bool generateMipsHere = false)
+            RenderPassEvent injectEvent
+            )
         {
             renderPassEvent   = injectEvent;
             _tagComposite     = string.IsNullOrEmpty(tag) ? "MipChainBlur.Composite" : tag;
+        }
 
+        public void Setup(
+            RTHandle srcRT,
+            RTHandle baseCol,
+            RTHandle baseDS
+        ) {
             _srcRT            = srcRT;
             _baseCol          = baseCol;
             _baseDS           = baseDS;
-            _compositeMat     = compositeMat;
+        }
+
+        public void SetSharedMaterial(Material compositeMat)
+        {
+            _compositeMat     = new Material(compositeMat);
+        }
+
+        public void SetParams(
+            float mipLevel,
+            bool useStencilNotEqual,
+            int stencilVal,
+            bool generateMipsHere = false
+            )
+        {
             _mipLevel         = Mathf.Max(0f, mipLevel);
 
             _useStencilNotEqual = useStencilNotEqual;

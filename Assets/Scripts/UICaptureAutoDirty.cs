@@ -1,7 +1,7 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using URP;
 
 [DisallowMultipleComponent]
 public class UICaptureAutoDirty : MonoBehaviour

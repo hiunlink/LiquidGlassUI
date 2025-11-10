@@ -1,8 +1,9 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-namespace UIEffects.Passes
+namespace URP.Passes
 {
     /// <summary>
     /// 高斯分离模糊（不负责清屏 & 不负责采集层）。
@@ -25,24 +26,24 @@ namespace UIEffects.Passes
         readonly string _tagV;
         readonly string _tagComposite;
 
-        readonly RTHandle _srcRT;    // 输入源
-        readonly RTHandle _tmpRT;    // H 输出
-        readonly RTHandle _dstRT;    // V 输出（最终输入合成）
-        readonly RTHandle _baseCol;  // 合成目标
-        readonly RTHandle _baseDS;   // 模板缓冲
+        RTHandle _srcRT;    // 输入源
+        RTHandle _tmpRT;    // H 输出
+        RTHandle _dstRT;    // V 输出（最终输入合成）
+        RTHandle _baseCol;  // 合成目标
+        RTHandle _baseDS;   // 模板缓冲
 
-        readonly Material _gaussianMat;
-        Material _gaussianVertMat;
-        Material _gaussianHorMat;
-        readonly Material _compositeMat;
+        Material _gaussianMat;
+        List<Material> _gaussianVertMats = new();
+        List<Material> _gaussianHorMats = new();
+        Material _compositeMat;
 
         private int _iteration = 1;
         private float _mipMap = 0;
-        readonly float _sigma;         // 连续可调
-        readonly float _tinyThreshold; // 小阈值（<= 则跳过模糊）
+        float _sigma;         // 连续可调
+        float _tinyThreshold; // 小阈值（<= 则跳过模糊）
 
-        readonly bool _useStencilNotEqual;
-        readonly int  _stencilVal;
+        bool _useStencilNotEqual;
+        int  _stencilVal;
 
         static readonly int _SourceTex  = Shader.PropertyToID("_SourceTex");
         static readonly int _TexelSize  = Shader.PropertyToID("_TexelSize");
@@ -52,43 +53,50 @@ namespace UIEffects.Passes
 
         public GaussianBlurPass(
             string tagPrefix,
-            RenderPassEvent injectEvent,
-            RTHandle srcRT,
-            RTHandle tmpRT,
-            RTHandle dstRT,
-            RTHandle baseCol,
-            RTHandle baseDS,
-            Material gaussianSeparableMat,
-            Material compositeCopyMat,
-            float sigma,
-            float tinyThreshold,
-            bool useStencilNotEqual,
-            int stencilVal)
+            RenderPassEvent injectEvent
+            )
         {
             renderPassEvent   = injectEvent;
 
             _tagH = string.IsNullOrEmpty(tagPrefix) ? "GaussianBlur.H" : tagPrefix + ".H";
             _tagV = string.IsNullOrEmpty(tagPrefix) ? "GaussianBlur.V" : tagPrefix + ".V";
             _tagComposite = string.IsNullOrEmpty(tagPrefix) ? "GaussianBlur.Composite" : tagPrefix + ".Composite";
+        }
 
+        public void Setup(
+            RTHandle srcRT,
+            RTHandle tmpRT,
+            RTHandle dstRT,
+            RTHandle baseCol,
+            RTHandle baseDS
+            )
+        {
             _srcRT   = srcRT;
             _tmpRT   = tmpRT;
             _dstRT   = dstRT;
             _baseCol = baseCol;
             _baseDS  = baseDS;
+        }
 
-            _gaussianMat  = gaussianSeparableMat;
-            _compositeMat = compositeCopyMat;
+        public void SetSharedMaterials(Material gaussianMat, Material compositeCopyMat)
+        {
+            _gaussianMat  = new Material(gaussianMat);
+            _compositeMat = new Material(compositeCopyMat);
+        }
 
+        public void SetParams(
+            int iteration,
+            float sigma,
+            float mipMap,
+            bool useStencilNotEqual,
+            int stencilVal)
+        {
             _sigma         = Mathf.Max(0f, sigma);
-            _tinyThreshold = Mathf.Max(0f, tinyThreshold);
+            _tinyThreshold = 0;
 
             _useStencilNotEqual = useStencilNotEqual;
             _stencilVal         = Mathf.Clamp(stencilVal, 0, 255);
-        }
-
-        public void Setup(int iteration, float mipMap)
-        {
+            
             _iteration = iteration;
             _mipMap = mipMap;
         }
@@ -119,27 +127,27 @@ namespace UIEffects.Passes
                 if (_sigma > _tinyThreshold)
                 {
                     // H: src → tmp
-                    _gaussianHorMat = new Material(_gaussianMat);
+                    var gaussianHorMat = GetOrCreateHorMaterial(it);
                     var cmdH = CommandBufferPool.Get(_tagH);
                     cmdH.SetRenderTarget(_tmpRT);
-                    _gaussianHorMat.SetTexture(_SourceTex, blurInputTex);
-                    _gaussianHorMat.SetVector(_TexelSize, new Vector4(1.0f / w, 1.0f / h, 0, 0));
-                    _gaussianHorMat.SetFloat(_Sigma, _sigma);
-                    _gaussianHorMat.SetFloat(_MipMap, _mipMap);
-                    cmdH.DrawProcedural(Matrix4x4.identity, _gaussianHorMat, 0, MeshTopology.Triangles, 3,
+                    gaussianHorMat.SetTexture(_SourceTex, blurInputTex);
+                    gaussianHorMat.SetVector(_TexelSize, new Vector4(1.0f / w, 1.0f / h, 0, 0));
+                    gaussianHorMat.SetFloat(_Sigma, _sigma);
+                    gaussianHorMat.SetFloat(_MipMap, _mipMap);
+                    cmdH.DrawProcedural(Matrix4x4.identity, gaussianHorMat, 0, MeshTopology.Triangles, 3,
                         1); // pass 0 = H
                     ctx.ExecuteCommandBuffer(cmdH);
                     CommandBufferPool.Release(cmdH);
 
                     // V: tmp → dst
-                    _gaussianVertMat = new Material(_gaussianMat);
+                    var gaussianVertMat = GetOrCreateVertMaterial(it);
                     var cmdV = CommandBufferPool.Get(_tagV);
                     cmdV.SetRenderTarget(_dstRT);
-                    _gaussianVertMat.SetTexture(_SourceTex, _tmpRT);
-                    _gaussianVertMat.SetVector(_TexelSize, new Vector4(1.0f / w, 1.0f / h, 0, 0));
-                    _gaussianVertMat.SetFloat(_Sigma, _sigma);
-                    _gaussianVertMat.SetFloat(_MipMap, _mipMap);
-                    cmdV.DrawProcedural(Matrix4x4.identity, _gaussianVertMat, 1, MeshTopology.Triangles, 3,
+                    gaussianVertMat.SetTexture(_SourceTex, _tmpRT);
+                    gaussianVertMat.SetVector(_TexelSize, new Vector4(1.0f / w, 1.0f / h, 0, 0));
+                    gaussianVertMat.SetFloat(_Sigma, _sigma);
+                    gaussianVertMat.SetFloat(_MipMap, _mipMap);
+                    cmdV.DrawProcedural(Matrix4x4.identity, gaussianVertMat, 1, MeshTopology.Triangles, 3,
                         1); // pass 1 = V
                     ctx.ExecuteCommandBuffer(cmdV);
                     CommandBufferPool.Release(cmdV);
@@ -160,6 +168,27 @@ namespace UIEffects.Passes
             cmdC.DrawProcedural(Matrix4x4.identity, _compositeMat, passIndex, MeshTopology.Triangles, 3, 1);
             ctx.ExecuteCommandBuffer(cmdC);
             CommandBufferPool.Release(cmdC);
+        }
+
+        private Material GetOrCreateVertMaterial(int i)
+        {
+            while (_gaussianVertMats.Count <= i) _gaussianVertMats.Add(null);
+            var m = _gaussianVertMats[i];
+            if (m == null) {m = new Material(_gaussianMat);
+                _gaussianVertMats[i] = m;
+            }
+
+            return m;
+        }
+        private Material GetOrCreateHorMaterial(int i)
+        {
+            while (_gaussianHorMats.Count <= i) _gaussianHorMats.Add(null);
+            var m = _gaussianHorMats[i];
+            if (m == null) {m = new Material(_gaussianMat);
+                _gaussianHorMats[i] = m;
+            }
+
+            return m;
         }
     }
 }
