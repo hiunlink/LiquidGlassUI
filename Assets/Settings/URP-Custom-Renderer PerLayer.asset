@@ -91,10 +91,10 @@ MonoBehaviour:
         serializedVersion: 2
         m_Bits: 64
       isForeground: 0
-      blur: 0
+      blur: 1
       blurAlgorithm: 1
       blurMip: 4.03
-      gaussianSigma: 3.76
+      gaussianSigma: 2.42
       iteration: 1
     - layer:
         serializedVersion: 2
@@ -110,11 +110,14 @@ MonoBehaviour:
         m_Bits: 256
       isForeground: 0
       blur: 0
-      blurAlgorithm: 1
-      blurMip: 2.21
+      blurAlgorithm: 0
+      blurMip: 1.59
       gaussianSigma: 0
       iteration: 1
-    generateMips: 1
+    blurAlgorithm: 1
+    blurMip: 4.02
+    gaussianSigma: 2.06
+    iteration: 1
     injectEvent: 400
 --- !u!114 &6576797754651316054
 MonoBehaviour:

@@ -160,7 +160,12 @@ namespace URP.Passes
             int passIndex = _useStencilNotEqual ? 1 : 0;
 
             var cmdC = CommandBufferPool.Get(_tagComposite);
-            cmdC.SetRenderTarget(_baseCol, _baseDS);
+            if (_baseDS != null)
+                cmdC.SetRenderTarget(_baseCol, _baseDS);
+            else
+            {
+                cmdC.SetRenderTarget(_baseCol);
+            }
             _compositeMat.SetTexture(_SourceTex, blurInputTex);
             if (_compositeMat.HasProperty(_StencilRef))
                 _compositeMat.SetInt(_StencilRef, _stencilVal);

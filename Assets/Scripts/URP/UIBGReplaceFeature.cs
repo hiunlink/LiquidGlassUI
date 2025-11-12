@@ -39,14 +39,10 @@ namespace URP
                 var cmd = CommandBufferPool.Get("UIBG Replace");
                 using (new ProfilingScope(cmd, new ProfilingSampler("UIBG Replace")))
                 {
-                    var srcId = new RenderTargetIdentifier(src);
                     var dstId = data.cameraData.renderer.cameraColorTarget;
-                    cmd.SetGlobalTexture("_MainTex", src);
-// #if UNITY_2022_3_OR_NEWER
-//                 Blitter.BlitTexture(cmd, srcId, dstId, s.replaceMaterial, 0);
-// #else
-                    cmd.Blit(srcId, dstId, s.replaceMaterial, 0);
-// #endif
+                    s.replaceMaterial.SetTexture("_MainTex", src);
+                    cmd.SetRenderTarget(dstId);
+                    cmd.DrawProcedural(Matrix4x4.identity, s.replaceMaterial, 0, MeshTopology.Triangles, 3, 1);
                 }
 
                 ctx.ExecuteCommandBuffer(cmd);

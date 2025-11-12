@@ -16,8 +16,16 @@ namespace URP
     // 模糊算法
     public enum BlurAlgorithm
     {
-        MipChain,          // 使用 MIP 链（UIBGCompositeStencilMip）
+        MipChain,          // 使用 MIP 链
         GaussianSeparable  // 高斯分离（H+V）
+    }
+    
+    [System.Flags]
+    public enum GlobalBlurAlgorithm
+    {
+        None = 0,
+        MipChain = 1 << 0,          // 使用 MIP 链
+        GaussianSeparable = 1 << 1  // 高斯分离（H+V）
     }
 
     public class UICaptureComposePerLayerFeature : ScriptableRendererFeature
@@ -75,8 +83,10 @@ namespace URP
             [Header("按从远到近排序（config[0] 最底层）")]
             public LayerConfig[] layers;
 
-            [Header("是否生成 MIP（对 blurRT 以及最终 baseRT 均生效）")]
-            public bool generateMips = true;
+            public GlobalBlurAlgorithm blurAlgorithm = GlobalBlurAlgorithm.MipChain;
+            [Range(0, 8)] public float blurMip = 3;
+            [Range(0f, 6f)] public float gaussianSigma = 2.0f;
+            [Range(1, 5)] public int iteration = 1;
 
             [Header("注入时机")]
             public RenderPassEvent injectEvent = RenderPassEvent.BeforeRenderingTransparents;
@@ -129,7 +139,7 @@ namespace URP
         readonly List<ScriptableRenderPass> _tempPasses = new();
 
         // 全局名
-        int _gid, _uvScaleId;
+        int _gid, _blurGid, _uvScaleId;
         
         public override void Create()
         {
@@ -139,6 +149,7 @@ namespace URP
             _matCopy = settings.gaussianCompositeMat ?? new Material(Shader.Find("Hidden/UIBGCompositeCopyStencil"));
             
             _gid = Shader.PropertyToID(settings.globalTextureName);
+            _blurGid = Shader.PropertyToID(settings.globalTextureName+"_BLUR");
             _uvScaleId = Shader.PropertyToID("_UIBG_UVScale");
         }
 
@@ -315,11 +326,32 @@ namespace URP
                 }
             }
 
+            var generateMips = (settings.blurAlgorithm & GlobalBlurAlgorithm.MipChain) > 0;
+            var generateGaussian = (settings.blurAlgorithm & GlobalBlurAlgorithm.GaussianSeparable) > 0;
             // ---------- Phase M：最终 baseRT 也要有 MIP ----------
+            if (generateMips)
             {
                 var pm = GetOrCreateGenMip(0,"M.Mips(baseRT)", evt);
-                pm.Setup(_baseCol, settings.generateMips);
+                pm.Setup(_baseCol, generateMips);
                 _tempPasses.Add(pm);
+                evt++;
+            }
+            // ---------- Phase P：最终 baseRT 做模糊到 blurRT ----------
+            if (generateGaussian)
+            {
+                EnsureGaussianPingPongRT(out var tmpRT, out var dstRT);
+                var globalBlur = GetOrCreateGaussian(32, "P.GlobalBlur(blurRT)", evt);
+                globalBlur.Setup(_baseCol, tmpRT, dstRT, _blurRT, null);
+                globalBlur.SetSharedMaterials(_matGauss, _matCopy);
+                globalBlur.SetParams(settings.iteration, settings.gaussianSigma, Mathf.Min(settings.gaussianSigma, 4f), false, 0);
+                _tempPasses.Add(globalBlur);
+                evt++;
+                
+                var pm = GetOrCreateGenMip(1,"M.Mips(BlurRT)", evt);
+                pm.Setup(_blurRT, generateMips);
+                _tempPasses.Add(pm);
+                
+                Shader.SetGlobalTexture(_blurGid, _blurRT);
             }
 
             // 入队执行
@@ -408,6 +440,14 @@ namespace URP
             for (int j = 0; j < i; j++)
                 if (layers[j].blur) return false;
             return true;
+        }
+
+        public bool IsUseBgGaussianBlur
+        {
+            get
+            {
+                return (settings.blurAlgorithm & GlobalBlurAlgorithm.GaussianSeparable) > 0;
+            }
         }
         ScriptableRenderPass RenderForeground(RTHandle src, RTHandle depth, int layer, LayerConfig[] layers, RenderPassEvent evt, bool multilayerMix)
         {
