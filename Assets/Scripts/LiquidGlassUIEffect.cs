@@ -41,7 +41,7 @@ public class LiquidGlassUIEffect : UIBehaviour
     public float refractionEdgeWidth = 35f;
     public float refractionMagnitude = 100f;
     public float chromaticAberration = 33f;
-    [Range(0, 2)] public float refractionLODBias = 1.32f;
+    [Range(0, 4)] public float refractionLODBias = 1.32f;
 
     [Header("Appears")] 
     public float edgeRimWidth = 6f;

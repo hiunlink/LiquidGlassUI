@@ -156,14 +156,14 @@ Material:
     - _Highlight: 1
     - _RefrAberration: 33
     - _RefrDim: 0.014957265
-    - _RefrLODBias: 1.32
+    - _RefrLODBias: 4
     - _RefrMag: 0.042735044
-    - _UIBG_Lod: 1.4
-    - _UseBlurBG: 0
+    - _UIBG_Lod: 8
+    - _UseBlurBG: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _IOR: {r: 1.51, g: 1.52, b: 1.53, a: 0}
-    - _RimLightColor: {r: 1, g: 1, b: 1, a: 0.25490198}
+    - _RimLightColor: {r: 1, g: 1, b: 1, a: 0.2627451}
     - _RimLightVec: {r: -0.707, g: 0.707, b: 0, a: 0}
     - _TintColor: {r: 0, g: 0, b: 0, a: 0}
     - _UIBG_UVScale: {r: 1, g: 1, b: 0, a: 0}
@@ -350,14 +350,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cornerRadiusPx: 90
   borderWidthPx: 4
-  blurAlgorithm: 1
-  mipMapLod: 1.4
+  blurAlgorithm: 2
+  mipMapLod: 8
   refractionEdgeWidth: 35
   refractionMagnitude: 100
   chromaticAberration: 33
-  refractionLODBias: 1.32
+  refractionLODBias: 4
   edgeRimWidth: 2
-  rimLight: {r: 1, g: 1, b: 1, a: 0.25490198}
+  rimLight: {r: 1, g: 1, b: 1, a: 0.2627451}
   glassTint: {r: 0, g: 0, b: 0, a: 0}
   autoAssignMaterial: 1
   continuousUpdate: 1
@@ -415,14 +415,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cornerRadiusPx: 90
   borderWidthPx: 4
-  blurAlgorithm: 1
-  mipMapLod: 1.4
+  blurAlgorithm: 2
+  mipMapLod: 2.25
   refractionEdgeWidth: 35
   refractionMagnitude: 100
   chromaticAberration: 33
-  refractionLODBias: 1.32
+  refractionLODBias: 3.04
   edgeRimWidth: 2
-  rimLight: {r: 1, g: 1, b: 1, a: 0.25490198}
+  rimLight: {r: 1, g: 1, b: 1, a: 0.5176471}
   glassTint: {r: 0, g: 0, b: 0, a: 0.3137255}
   autoAssignMaterial: 1
   continuousUpdate: 1
@@ -747,7 +747,8 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1507112336}
   m_Father: {fileID: 1938411904}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -811,7 +812,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 1
-  m_AdditionalShaderChannelsFlag: 0
+  m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
   m_SortingOrder: 0
@@ -1046,7 +1047,7 @@ GameObject:
   - component: {fileID: 1507112339}
   - component: {fileID: 1507112338}
   - component: {fileID: 1507112337}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1066,11 +1067,11 @@ RectTransform:
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 1873718844}
-  m_Father: {fileID: 1816375798}
+  m_Father: {fileID: 1148132111}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -151.17}
+  m_AnchoredPosition: {x: 0, y: -789}
   m_SizeDelta: {x: 300, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1507112337
@@ -1129,7 +1130,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 2100000, guid: a8d1a5cedc4f51b428ff8540e006844d, type: 2}
+  m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
@@ -1263,14 +1264,14 @@ Material:
     - _Highlight: 0
     - _RefrAberration: 33
     - _RefrDim: 0.014957265
-    - _RefrLODBias: 1.32
+    - _RefrLODBias: 3.04
     - _RefrMag: 0.042735044
-    - _UIBG_Lod: 1.4
-    - _UseBlurBG: 0
+    - _UIBG_Lod: 2.25
+    - _UseBlurBG: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _IOR: {r: 1.51, g: 1.52, b: 1.53, a: 0}
-    - _RimLightColor: {r: 1, g: 1, b: 1, a: 0.25490198}
+    - _RimLightColor: {r: 1, g: 1, b: 1, a: 0.5176471}
     - _RimLightVec: {r: -0.707, g: 0.707, b: 0, a: 0}
     - _TintColor: {r: 0, g: 0, b: 0, a: 0.3137255}
     - _UIBG_UVScale: {r: 1, g: 1, b: 0, a: 0}
@@ -1438,7 +1439,6 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
-  - {fileID: 1507112336}
   - {fileID: 855365806}
   - {fileID: 894721300}
   m_Father: {fileID: 1938411904}
@@ -1482,7 +1482,7 @@ GameObject:
   - component: {fileID: 1873718844}
   - component: {fileID: 1873718846}
   - component: {fileID: 1873718845}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: Text (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}

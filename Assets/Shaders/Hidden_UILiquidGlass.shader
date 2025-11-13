@@ -14,7 +14,7 @@ Shader "Hidden/UI_LiquidGlass"
         _RefrMag("Refraction Magnitude", Float) = 0.10
         _RefrAberration("Chromatic Aberration (0-10)", Float) = 5.0
         _IOR("IOR (RGB)", Vector) = (1.51, 1.52, 1.53, 0)
-        _RefrLODBias("Refraction LOD Bias (0-2)", Range(0,2)) = 1.0
+        _RefrLODBias("Refraction LOD Bias (0-4)", Range(0,4)) = 1.0
 
         // Edge + Tint
         _EdgeDim("Edge Rim Width", Float) = 0.003
@@ -216,6 +216,7 @@ Shader "Hidden/UI_LiquidGlass"
                 float3 rimLight = _RimLightColor.rgb * _RimLightColor.a * rimIntensity;
 
                 // simple reflection sample: offset outward along normal
+                #if defined(ENABLE_REFLECTION)
                 float2 reflOffset = (_EdgeDim*12.0 + 0.5*_RefrMag * cosEdge) * nrm;
                 float3 reflCol = SampleBlurBG(bgUV + reflOffset, 4);
                 // simulate bloom effect
@@ -224,6 +225,10 @@ Shader "Hidden/UI_LiquidGlass"
                 float3 highlight = clamp(reflCol - threthold, 0, 1) / (1 - threthold) * intensity;
                 reflCol = BlendScreen(reflCol, highlight);
                 reflCol = lerp(reflCol, _TintColor.rgb, _TintColor.a);
+                #else
+                float3 reflCol = float3(0,0,0);
+                #endif
+                
 
                 #if defined(DBG_TINT_EDGE_LIGHT)
                     float3 mergedEdge = rimLight;
