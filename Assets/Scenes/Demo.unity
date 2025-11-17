@@ -152,7 +152,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _EdgeDim: 0.00085470086
+    - _EdgeDim: 0.00042735043
     - _Highlight: 1
     - _RefrAberration: 33
     - _RefrDim: 0.014957265
@@ -163,7 +163,7 @@ Material:
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _IOR: {r: 1.51, g: 1.52, b: 1.53, a: 0}
-    - _RimLightColor: {r: 1, g: 1, b: 1, a: 0.2627451}
+    - _RimLightColor: {r: 1, g: 1, b: 1, a: 0.3529412}
     - _RimLightVec: {r: -0.707, g: 0.707, b: 0, a: 0}
     - _TintColor: {r: 0, g: 0, b: 0, a: 0}
     - _UIBG_UVScale: {r: 1, g: 1, b: 0, a: 0}
@@ -251,7 +251,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: -23.7}
   m_SizeDelta: {x: 338, y: 140}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &855365807
@@ -356,8 +356,8 @@ MonoBehaviour:
   refractionMagnitude: 100
   chromaticAberration: 33
   refractionLODBias: 4
-  edgeRimWidth: 2
-  rimLight: {r: 1, g: 1, b: 1, a: 0.2627451}
+  edgeRimWidth: 1
+  rimLight: {r: 1, g: 1, b: 1, a: 0.3529412}
   glassTint: {r: 0, g: 0, b: 0, a: 0}
   autoAssignMaterial: 1
   continuousUpdate: 1
@@ -398,8 +398,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -366.61}
-  m_SizeDelta: {x: 338, y: 339.42}
+  m_AnchoredPosition: {x: 0, y: -631.1}
+  m_SizeDelta: {x: 1016.23, y: 976.2}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &894721301
 MonoBehaviour:
@@ -416,14 +416,14 @@ MonoBehaviour:
   cornerRadiusPx: 90
   borderWidthPx: 4
   blurAlgorithm: 2
-  mipMapLod: 2.25
+  mipMapLod: 4.05
   refractionEdgeWidth: 35
   refractionMagnitude: 100
   chromaticAberration: 33
-  refractionLODBias: 3.04
-  edgeRimWidth: 2
-  rimLight: {r: 1, g: 1, b: 1, a: 0.5176471}
-  glassTint: {r: 0, g: 0, b: 0, a: 0.3137255}
+  refractionLODBias: 4
+  edgeRimWidth: 1
+  rimLight: {r: 1, g: 1, b: 1, a: 0.20392157}
+  glassTint: {r: 0.2264151, g: 0.2264151, b: 0.2264151, a: 0.8666667}
   autoAssignMaterial: 1
   continuousUpdate: 1
 --- !u!114 &894721302
@@ -1260,20 +1260,20 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _EdgeDim: 0.00085470086
+    - _EdgeDim: 0.00042735043
     - _Highlight: 0
     - _RefrAberration: 33
     - _RefrDim: 0.014957265
-    - _RefrLODBias: 3.04
+    - _RefrLODBias: 4
     - _RefrMag: 0.042735044
-    - _UIBG_Lod: 2.25
+    - _UIBG_Lod: 4.05
     - _UseBlurBG: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _IOR: {r: 1.51, g: 1.52, b: 1.53, a: 0}
-    - _RimLightColor: {r: 1, g: 1, b: 1, a: 0.5176471}
+    - _RimLightColor: {r: 1, g: 1, b: 1, a: 0.20392157}
     - _RimLightVec: {r: -0.707, g: 0.707, b: 0, a: 0}
-    - _TintColor: {r: 0, g: 0, b: 0, a: 0.3137255}
+    - _TintColor: {r: 0.2264151, g: 0.2264151, b: 0.2264151, a: 0.8666667}
     - _UIBG_UVScale: {r: 1, g: 1, b: 0, a: 0}
   m_BuildTextureStacks: []
 --- !u!1 &1769651052

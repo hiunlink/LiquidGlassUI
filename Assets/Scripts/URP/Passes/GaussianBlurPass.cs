@@ -43,6 +43,7 @@ namespace URP.Passes
         float _tinyThreshold; // 小阈值（<= 则跳过模糊）
 
         bool _useStencilNotEqual;
+        bool _useStencilNotEqualComposite;
         int  _stencilVal;
 
         static readonly int _SourceTex  = Shader.PropertyToID("_SourceTex");
@@ -89,12 +90,14 @@ namespace URP.Passes
             float sigma,
             float mipMap,
             bool useStencilNotEqual,
+            bool useStencilNotEqualComposite,
             int stencilVal)
         {
             _sigma         = Mathf.Max(0f, sigma);
             _tinyThreshold = 0;
 
             _useStencilNotEqual = useStencilNotEqual;
+            _useStencilNotEqualComposite = useStencilNotEqualComposite;
             _stencilVal         = Mathf.Clamp(stencilVal, 0, 255);
             
             _iteration = iteration;
@@ -157,7 +160,7 @@ namespace URP.Passes
             }
 
             // 合成到 base（覆盖），Stencil 由材质 pass 决定
-            int passIndex = _useStencilNotEqual ? 1 : 0;
+            int passIndex = _useStencilNotEqualComposite ? 1 : 0; 
 
             var cmdC = CommandBufferPool.Get(_tagComposite);
             if (_baseDS != null)

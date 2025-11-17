@@ -262,7 +262,8 @@ namespace URP
                     evt++;
                 }
                 
-                bool useStencilClip = UseStencilClip(j, layers, settings.multiLayerMix); 
+                bool useStencilClip = UseStencilClip(j, layers, settings.multiLayerMix, false); 
+                bool useStencilClipComposite = UseStencilClip(j, layers, settings.multiLayerMix, true); 
                 // ======== Draw layer ==========
                 // 在模糊层叠加渲染时需要先blit
                 if (config.blur && settings.multiLayerMix)
@@ -317,7 +318,9 @@ namespace URP
                             var p = GetOrCreateGaussian(j, $"B[{j}].Gaussian", evt);
                             p.Setup(_blurRT, tmpRT, dstRT, _baseCol, _baseDS);
                             p.SetSharedMaterials(_matGauss, _matCopy);
-                            p.SetParams(config.iteration, config.gaussianSigma, Mathf.Min(config.gaussianSigma, 4f), useStencilClip, stencilVal);
+                            p.SetParams(config.iteration, config.gaussianSigma, 
+                                Mathf.Min(config.gaussianSigma, 4f), 
+                                useStencilClip, useStencilClipComposite, stencilVal);
                             _tempPasses.Add(p);
                             evt++;
                             break;
@@ -343,7 +346,8 @@ namespace URP
                 var globalBlur = GetOrCreateGaussian(32, "P.GlobalBlur(blurRT)", evt);
                 globalBlur.Setup(_baseCol, tmpRT, dstRT, _blurRT, null);
                 globalBlur.SetSharedMaterials(_matGauss, _matCopy);
-                globalBlur.SetParams(settings.iteration, settings.gaussianSigma, Mathf.Min(settings.gaussianSigma, 4f), false, 0);
+                globalBlur.SetParams(settings.iteration, settings.gaussianSigma, 
+                    Mathf.Min(settings.gaussianSigma, 4f), false, false, 0);
                 _tempPasses.Add(globalBlur);
                 evt++;
                 
@@ -377,7 +381,7 @@ namespace URP
             return cmd;
         }
 
-        static bool UseStencilClip(int layer, LayerConfig[] layerConfigs, bool multilayerMix)
+        static bool UseStencilClip(int layer, LayerConfig[] layerConfigs, bool multilayerMix, bool composite)
         {
             var config = layerConfigs[layer];
             var isForeground = config.isForeground;
@@ -389,6 +393,13 @@ namespace URP
                     fgLayer = j;
                     break;
                 }
+            }
+            
+            // 合成阶段
+            if (composite)
+            {
+                // 上层有前景且叠加时
+                return fgLayer > layer && multilayerMix;
             }
 
             // 不叠加时，只要有模糊层就不能做Stencil优化
@@ -407,12 +418,14 @@ namespace URP
                         return false;
                 }
             }
+
             // 当前层的上层有前景且自己不模糊时才做裁剪
             for (var i = layer + 1; i < layerConfigs.Length; i++)
             {
                 if (layerConfigs[i].isForeground && !isForeground && !config.blur)
                     return true;
             }
+
             return false;
         }
         
@@ -471,7 +484,7 @@ namespace URP
             else
             {
                 var useStencilClip = UseStencilClip(layer, layers,
-                    multilayerMix);
+                    multilayerMix, false);
                 // 该前景层之前有模糊层 → 不能提前画 Opaque，这里做完整正常渲染（默认Tag，不加 NotEqual）
                 var pf = GetOrCreateDrawDefault(layer,
                     $"F.FG_Full[{layer}]", evt);
@@ -557,8 +570,8 @@ namespace URP
                 => _inner.Setup(src,tmp,dst,baseCol,baseDS);
             public void SetSharedMaterials(Material gauss, Material copy)
                 => _inner.SetSharedMaterials(gauss, copy); // 需要在你的类里添加
-            public void SetParams(int iteration, float sigma, float mipMap , bool useStencilNotEqual, int stencilVal)
-                => _inner.SetParams(iteration, sigma, mipMap, useStencilNotEqual, stencilVal);
+            public void SetParams(int iteration, float sigma, float mipMap , bool useStencilNotEqual,bool useStencilNotEqualComposite, int stencilVal)
+                => _inner.SetParams(iteration, sigma, mipMap, useStencilNotEqual, useStencilNotEqualComposite, stencilVal);
             public override void Execute(ScriptableRenderContext ctx, ref RenderingData data) => _inner.Execute(ctx, ref data);
         }
         GaussianWrapperPass GetOrCreateGaussian(int i, string tag, RenderPassEvent evt)
