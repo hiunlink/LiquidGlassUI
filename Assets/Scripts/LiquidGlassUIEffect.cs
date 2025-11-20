@@ -47,8 +47,9 @@ public class LiquidGlassUIEffect : UIBehaviour
     public float edgeRimWidth = 6f;
     public Color rimLight = new Color(1, 1, 1, 0.15f);
     public Color glassTint = Color.clear;
-    
-    [Header("Material")]
+
+    [Header("Material")] 
+    public string backgroundRTName = "_UI_BG";
     [Tooltip("Auto-assign Hidden/UI_LiquidGlass when using default UI material")] 
     public bool autoAssignMaterial = true;
 
@@ -75,6 +76,8 @@ public class LiquidGlassUIEffect : UIBehaviour
     static readonly int ID_EdgeDim = Shader.PropertyToID("_EdgeDim");
     static readonly int ID_TintColor = Shader.PropertyToID("_TintColor");
     static readonly int ID_RimLightColor = Shader.PropertyToID("_RimLightColor");
+    static readonly int ID_UI_BG = Shader.PropertyToID("_UI_BG");
+    static readonly int ID_UI_BG_BLUR = Shader.PropertyToID("_UI_BG_BLUR");
     
     const string ShaderName = "Hidden/UI_LiquidGlass";
 
@@ -209,6 +212,9 @@ public class LiquidGlassUIEffect : UIBehaviour
         var border = Mathf.Max(0f, borderWidthPx) / canvasH;
         var rectUVOffset = new Vector2( _rt.anchoredPosition.x / canvasW, _rt.anchoredPosition.y / canvasH );
 
+        mat.SetTexture(ID_UI_BG, UICaptureEffectManager.Instance.GetRenderTexture(backgroundRTName));
+        mat.SetTexture(ID_UI_BG_BLUR, UICaptureEffectManager.Instance.GetBlurRenderTexture(backgroundRTName));
+        
         // Push to material
         mat.SetVector(ID_HalfSize, halfSize);
         mat.SetFloat(ID_Radius, radius);

@@ -42,8 +42,8 @@ namespace URP
 
             [Tooltip("该层是否需要模糊（blurRT→MIP→按本层blurMip合成回base）")]
             public bool blur = false;
-
             
+            // 本层模糊
             [ShowIf("blur")]
             public BlurAlgorithm blurAlgorithm = BlurAlgorithm.MipChain;
             [ShowIf("blur","blurAlgorithm", (int)BlurAlgorithm.MipChain)]
@@ -52,6 +52,20 @@ namespace URP
             [Range(0f, 6f)] public float gaussianSigma = 2.0f;
             [ShowIf("blur","blurAlgorithm", (int)BlurAlgorithm.GaussianSeparable)]
             [Range(1, 5)] public int iteration = 1;
+            
+            // 输出全局贴图，填空不输出
+            [Header("输出全局贴图名（供 UI 玻璃采样 / Replace 使用）")]
+            public string globalTextureName = "_UI_BG";
+            [Header("输出分辨率缩放")]
+            [Range(0.25f, 1f)] public float resolutionScale = 1f;
+            public GlobalBlurAlgorithm globalBlurAlgorithm = GlobalBlurAlgorithm.MipChain;
+            [Range(0, 8)] public float globalBlurMip = 3;
+            [Range(0f, 6f)] public float globalGaussianSigma = 2.0f;
+            [Range(1, 5)] public int globalIteration = 1;
+            // 是否需要重新绘制
+            private bool _dirty = true;
+            public void SetDirty(bool v) => _dirty = v;
+            public bool IsDirty => _dirty || string.IsNullOrEmpty(globalTextureName); // 没有输出贴图就没办法缓存，需要重新绘制
         }
 
         [System.Serializable]
@@ -83,20 +97,16 @@ namespace URP
             [Header("按从远到近排序（config[0] 最底层）")]
             public LayerConfig[] layers;
 
-            public GlobalBlurAlgorithm blurAlgorithm = GlobalBlurAlgorithm.MipChain;
-            [Range(0, 8)] public float blurMip = 3;
-            [Range(0f, 6f)] public float gaussianSigma = 2.0f;
-            [Range(1, 5)] public int iteration = 1;
-
             [Header("注入时机")]
             public RenderPassEvent injectEvent = RenderPassEvent.BeforeRenderingTransparents;
         }
 
-        // -------------------- Runtime Cache --------------------
-        private bool _dirty = true;
-        public void SetDirty(bool v) => _dirty = v;
-        public bool IsDirty => _dirty;
-        
+        internal class GlobalTextureInfo
+        {
+            public string globalTextureName = "_UI_BG";
+            public float resolutionScale = 1f;
+        }
+
         // ========== 通用小工具 Pass ==========
         // 通用 GenerateMips（可反复复用）
         class GenMipsPass : ScriptableRenderPass
@@ -134,6 +144,7 @@ namespace URP
         readonly List<GenMipsPass>           _poolGenMips = new();
         readonly List<GaussianWrapperPass>   _poolGaussian = new();
         readonly List<OneShot>               _poolOneShot = new();
+        readonly List<CompositePass>         _poolComposite = new();
         
         // 临时排队列表（仅存引用，不 new 实例）
         readonly List<ScriptableRenderPass> _tempPasses = new();
@@ -148,9 +159,19 @@ namespace URP
             _matGauss= settings.gaussianSeparableMat ?? new Material(Shader.Find("Hidden/UIBG_GaussianSeparable"));
             _matCopy = settings.gaussianCompositeMat ?? new Material(Shader.Find("Hidden/UIBGCompositeCopyStencil"));
             
-            _gid = Shader.PropertyToID(settings.globalTextureName);
-            _blurGid = Shader.PropertyToID(settings.globalTextureName+"_BLUR");
             _uvScaleId = Shader.PropertyToID("_UIBG_UVScale");
+        }
+
+        public void SetDirty(LayerMask layer, bool dirty)
+        {
+            foreach (var layerConfig in settings.layers)
+            {
+                if (layerConfig.layer == layer)
+                {
+                    layerConfig.SetDirty(dirty);
+                    break;
+                }
+            }
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData data)
@@ -161,60 +182,45 @@ namespace URP
                 return;
             }
             if (settings.layers == null || settings.layers.Length == 0) return;
-
-    #if UNITY_EDITOR
-            // 在编辑器但未运行时强制每帧重绘
-            if (!Application.isPlaying)
-            {
-                _dirty = true;
-            }
-    #endif
-            // --- 如果界面没变化并已有缓存，直接复用 ---
-            if (!_dirty && _baseCol != null)
-            {
-                Shader.SetGlobalTexture(_gid, _baseCol);
-                Shader.SetGlobalVector(_uvScaleId, new Vector4(
-                    (float)_baseCol.rt.width / data.cameraData.cameraTargetDescriptor.width,
-                    (float)_baseCol.rt.height / data.cameraData.cameraTargetDescriptor.height,
-                    0, 0));
-                return;
-            }
-            
-            // --- 继续执行完整渲染 ---
-            _dirty = false; // 渲染后标记为“干净”
+    //TODO: 缓存系统
+    // #if UNITY_EDITOR
+    //         // 在编辑器但未运行时强制每帧重绘
+    //         if (!Application.isPlaying)
+    //         {
+    //             _dirty = true;
+    //         }
+    // #endif
+    //         // --- 如果界面没变化并已有缓存，直接复用 ---
+    //         if (!_dirty && _baseCol != null)
+    //         {
+    //             Shader.SetGlobalTexture(_gid, _baseCol);
+    //             Shader.SetGlobalVector(_uvScaleId, new Vector4(
+    //                 (float)_baseCol.rt.width / data.cameraData.cameraTargetDescriptor.width,
+    //                 (float)_baseCol.rt.height / data.cameraData.cameraTargetDescriptor.height,
+    //                 0, 0));
+    //             return;
+    //         }
+    //         
+    //         // --- 继续执行完整渲染 ---
+    //         _dirty = false; // 渲染后标记为“干净”
             
             _tempPasses.Clear();
-
-            var camDesc = data.cameraData.cameraTargetDescriptor;
-            int w = Mathf.Max(1, Mathf.RoundToInt(camDesc.width  * settings.resolutionScale));
-            int h = Mathf.Max(1, Mathf.RoundToInt(camDesc.height * settings.resolutionScale));
-
-            // (重)建 RT
-            if (_baseCol==null || _baseCol.rt.width!=w || _baseCol.rt.height!=h)
+            var firstGlobalTextureInfo = new GlobalTextureInfo();
+            if (settings.layers.Length > 0)
             {
-                _baseCol?.Release(); _baseDS?.Release(); _blurRT?.Release();
-
-                var col = new RenderTextureDescriptor(w,h){
-                    graphicsFormat = settings.useHDR ? GraphicsFormat.B10G11R11_UFloatPack32 : GraphicsFormat.R8G8B8A8_UNorm,
-                    depthStencilFormat = GraphicsFormat.None,
-                    msaaSamples=1, useMipMap=true, autoGenerateMips=false,
-                    sRGB = (QualitySettings.activeColorSpace==ColorSpace.Linear)
-                };
-                var ds = new RenderTextureDescriptor(w,h){
-                    graphicsFormat=GraphicsFormat.None, depthStencilFormat=GraphicsFormat.D24_UNorm_S8_UInt,
-                    msaaSamples=1, useMipMap=false, autoGenerateMips=false, sRGB=false
-                };
-                var blur = new RenderTextureDescriptor(w,h){
-                    graphicsFormat = settings.useHDR ? GraphicsFormat.B10G11R11_UFloatPack32 : GraphicsFormat.R8G8B8A8_UNorm,
-                    depthStencilFormat = GraphicsFormat.None,
-                    msaaSamples=1, useMipMap=true, autoGenerateMips=false,
-                    sRGB = (QualitySettings.activeColorSpace==ColorSpace.Linear)
-                };
-
-                _baseCol = RTHandles.Alloc(col, FilterMode.Bilinear, name: settings.globalTextureName);
-                _baseDS  = RTHandles.Alloc(ds,  name: settings.globalTextureName+"_DS");
-                _blurRT  = RTHandles.Alloc(blur,FilterMode.Bilinear, name: settings.globalTextureName+"_BLUR", wrapMode: TextureWrapMode.Clamp);
+                var firstLayer = settings.layers[0];
+                firstGlobalTextureInfo.globalTextureName = firstLayer.globalTextureName;
+                firstGlobalTextureInfo.resolutionScale = firstLayer.resolutionScale;
             }
+            else
+            {
+                firstGlobalTextureInfo.globalTextureName = settings.globalTextureName;
+                firstGlobalTextureInfo.resolutionScale = settings.resolutionScale;
+            }
+
+            var useHDR = settings.useHDR;
+            var camDesc = data.cameraData.cameraTargetDescriptor;
+            EnsureGlobalTextures(camDesc, firstGlobalTextureInfo, useHDR, out var w, out var h);
 
             // 清 base / blur
             {
@@ -251,6 +257,10 @@ namespace URP
             for (int j = 0; j < layers.Length; j++)
             {
                 var config = layers[j];
+                var layerGlobalTextureInfo = new GlobalTextureInfo();
+                layerGlobalTextureInfo.globalTextureName = config.globalTextureName;
+                layerGlobalTextureInfo.resolutionScale = config.resolutionScale;
+                EnsureGlobalTextures(camDesc, layerGlobalTextureInfo, useHDR, out var w1, out var h1);
                 var fgColRT = config.blur ? _blurRT : _baseCol;
                 var fgDepthRT = config.blur ? null : _baseDS;
 
@@ -327,43 +337,151 @@ namespace URP
                         }
                     }
                 }
-            }
-
-            var generateMips = (settings.blurAlgorithm & GlobalBlurAlgorithm.MipChain) > 0;
-            var generateGaussian = (settings.blurAlgorithm & GlobalBlurAlgorithm.GaussianSeparable) > 0;
-            // ---------- Phase M：最终 baseRT 也要有 MIP ----------
-            if (generateMips)
-            {
-                var pm = GetOrCreateGenMip(0,"M.Mips(baseRT)", evt);
-                pm.Setup(_baseCol, generateMips);
-                _tempPasses.Add(pm);
-                evt++;
-            }
-            // ---------- Phase P：最终 baseRT 做模糊到 blurRT ----------
-            if (generateGaussian)
-            {
-                EnsureGaussianPingPongRT(out var tmpRT, out var dstRT);
-                var globalBlur = GetOrCreateGaussian(32, "P.GlobalBlur(blurRT)", evt);
-                globalBlur.Setup(_baseCol, tmpRT, dstRT, _blurRT, null);
-                globalBlur.SetSharedMaterials(_matGauss, _matCopy);
-                globalBlur.SetParams(settings.iteration, settings.gaussianSigma, 
-                    Mathf.Min(settings.gaussianSigma, 4f), false, false, 0);
-                _tempPasses.Add(globalBlur);
-                evt++;
                 
-                var pm = GetOrCreateGenMip(1,"M.Mips(BlurRT)", evt);
-                pm.Setup(_blurRT, generateMips);
-                _tempPasses.Add(pm);
+                // 需要输出模糊贴图
+                var generateMips = (config.globalBlurAlgorithm & GlobalBlurAlgorithm.MipChain) > 0;
+                var generateGaussian = (config.globalBlurAlgorithm & GlobalBlurAlgorithm.GaussianSeparable) > 0;
+                // ---------- Phase M：最终 baseRT 也要有 MIP ----------
+                if (generateMips)
+                {
+                    var pm = GetOrCreateGenMip(j,"M.Mips(baseRT)", evt);
+                    pm.Setup(_baseCol, generateMips);
+                    _tempPasses.Add(pm);
+                    evt++;
+                }
+                // ---------- Phase P：最终 baseRT 做模糊到 blurRT ----------
+                if (generateGaussian)
+                {
+                    EnsureGaussianPingPongRT(out var tmpRT, out var dstRT);
+                    var globalBlur = GetOrCreateGaussian(j, "P.GlobalBlur(blurRT)", evt);
+                    globalBlur.Setup(_baseCol, tmpRT, dstRT, _blurRT, null);
+                    globalBlur.SetSharedMaterials(_matGauss, _matCopy);
+                    globalBlur.SetParams(config.globalIteration, config.globalGaussianSigma, 
+                        Mathf.Min(config.globalGaussianSigma, 4f), false, false, 0);
+                    _tempPasses.Add(globalBlur);
+                    evt++;
                 
-                Shader.SetGlobalTexture(_blurGid, _blurRT);
+                    var pm = GetOrCreateGenMip(j,"M.Mips(BlurRT)", evt);
+                    pm.Setup(_blurRT, generateMips);
+                    _tempPasses.Add(pm);
+                    evt++;
+                    Shader.SetGlobalTexture(_blurGid, _blurRT);
+                }
+                
+                // 曝光全局
+                Shader.SetGlobalTexture(_gid, _baseCol);
+                Shader.SetGlobalVector(_uvScaleId, new Vector4((float)w / camDesc.width, (float)h / camDesc.height, 0, 0));
+                
+                // 合成到下层
+                var nextLayer = j + 1;
+                if (nextLayer >= layers.Length) continue;
+                var nextLayerConfig = layers[nextLayer];
+                var compositeToNextLayer = config.globalTextureName != nextLayerConfig.globalTextureName;
+                if (compositeToNextLayer)
+                {
+                    var fromCol = _baseCol;
+                    var fromDS = _baseDS;
+                    EnsureGlobalTextures(camDesc, new GlobalTextureInfo()
+                    {
+                        globalTextureName = nextLayerConfig.globalTextureName,
+                        resolutionScale = nextLayerConfig.resolutionScale
+                    },useHDR,out var w2, out var h2);
+                    var compositePass = GetOrCreateComposite(j,
+                        $"Composite {config.globalTextureName} -> {nextLayerConfig.globalTextureName}",evt);
+                    compositePass.Setup(fromCol, _baseCol, fromDS, useStencilClipComposite, 1);
+                    compositePass.SetMaterial(_matCopy);
+                    _tempPasses.Add(compositePass);
+                    evt++;
+                }
             }
 
             // 入队执行
             foreach (var p in _tempPasses) renderer.EnqueuePass(p);
+        }
 
-            // 曝光全局
-            Shader.SetGlobalTexture(_gid, _baseCol);
-            Shader.SetGlobalVector(_uvScaleId, new Vector4((float)w / camDesc.width, (float)h / camDesc.height, 0, 0));
+        #region Public
+
+        public RenderTexture GetRenderTexture(string textureName)
+        {
+            if (textureName == null || !_tempRTMap.ContainsKey(textureName))
+                return null;
+            var textures = _tempRTMap[textureName];
+            return textures.BaseCol.rt;
+        }
+        public RenderTexture GetBlurRenderTexture(string textureName)
+        {
+            if (!_tempRTMap.ContainsKey(textureName))
+                return null;
+            var textures = _tempRTMap[textureName];
+            return textures.BlurRT.rt;
+        }
+
+        #endregion
+
+        internal class GlobalTextures
+        {
+            public RTHandle BaseCol;
+            public RTHandle BaseDS;
+            public RTHandle BlurRT;
+        }
+
+        private Dictionary<string, GlobalTextures> _tempRTMap = new ();
+        private void EnsureGlobalTextures(RenderTextureDescriptor camDesc, GlobalTextureInfo layerGlobalTextureInfo,
+            bool useHDR, out int w, out int h)
+        {
+            w = Mathf.Max(1, Mathf.RoundToInt(camDesc.width  * layerGlobalTextureInfo.resolutionScale));
+            h = Mathf.Max(1, Mathf.RoundToInt(camDesc.height * layerGlobalTextureInfo.resolutionScale));
+
+            var tempRT = _tempRTMap.ContainsKey(layerGlobalTextureInfo.globalTextureName)?
+                _tempRTMap[layerGlobalTextureInfo.globalTextureName]: null;
+            
+            // (重)建 RT
+            if (tempRT==null || tempRT.BaseCol.rt.width!=w || tempRT.BaseCol.rt.height!=h )
+            {
+                //判断RT释放
+                if (tempRT != null)
+                {
+                    tempRT.BaseCol?.Release();
+                    tempRT.BaseDS?.Release();
+                    tempRT.BlurRT?.Release();
+                }
+
+                var col = new RenderTextureDescriptor(w,h){
+                    graphicsFormat = useHDR ? GraphicsFormat.B10G11R11_UFloatPack32 : GraphicsFormat.R8G8B8A8_UNorm,
+                    depthStencilFormat = GraphicsFormat.None,
+                    msaaSamples=1, useMipMap=true, autoGenerateMips=false,
+                    sRGB = (QualitySettings.activeColorSpace==ColorSpace.Linear)
+                };
+                var ds = new RenderTextureDescriptor(w,h){
+                    graphicsFormat=GraphicsFormat.None, depthStencilFormat=GraphicsFormat.D24_UNorm_S8_UInt,
+                    msaaSamples=1, useMipMap=false, autoGenerateMips=false, sRGB=false
+                };
+                var blur = new RenderTextureDescriptor(w,h){
+                    graphicsFormat = useHDR ? GraphicsFormat.B10G11R11_UFloatPack32 : GraphicsFormat.R8G8B8A8_UNorm,
+                    depthStencilFormat = GraphicsFormat.None,
+                    msaaSamples=1, useMipMap=true, autoGenerateMips=false,
+                    sRGB = (QualitySettings.activeColorSpace==ColorSpace.Linear)
+                };
+
+                
+                _baseCol = RTHandles.Alloc(col, FilterMode.Bilinear, name: layerGlobalTextureInfo.globalTextureName);
+                _baseDS  = RTHandles.Alloc(ds,  name: layerGlobalTextureInfo.globalTextureName+"_DS");
+                _blurRT  = RTHandles.Alloc(blur,FilterMode.Bilinear, name: layerGlobalTextureInfo.globalTextureName+"_BLUR", wrapMode: TextureWrapMode.Clamp);
+                _tempRTMap[layerGlobalTextureInfo.globalTextureName] = new GlobalTextures()
+                {
+                    BaseCol = _baseCol,
+                    BaseDS = _baseDS,
+                    BlurRT = _blurRT
+                };
+            }
+
+            var rtInfo = _tempRTMap[layerGlobalTextureInfo.globalTextureName];
+            _baseCol = rtInfo.BaseCol;
+            _baseDS = rtInfo.BaseDS;
+            _blurRT = rtInfo.BlurRT;
+            
+            _gid = Shader.PropertyToID(layerGlobalTextureInfo.globalTextureName);
+            _blurGid = Shader.PropertyToID(layerGlobalTextureInfo.globalTextureName+"_BLUR");
         }
 
         // ========== 小工具 ==========
@@ -455,13 +573,6 @@ namespace URP
             return true;
         }
 
-        public bool IsUseBgGaussianBlur
-        {
-            get
-            {
-                return (settings.blurAlgorithm & GlobalBlurAlgorithm.GaussianSeparable) > 0;
-            }
-        }
         ScriptableRenderPass RenderForeground(RTHandle src, RTHandle depth, int layer, LayerConfig[] layers, RenderPassEvent evt, bool multilayerMix)
         {
             var config = layers[layer];
@@ -557,6 +668,14 @@ namespace URP
             while (_poolGenMips.Count <= i) _poolGenMips.Add(null);
             var p = _poolGenMips[i];
             if (p == null) { p = new GenMipsPass(tag, evt); _poolGenMips[i] = p; }
+            else { p.renderPassEvent = evt; }
+            return p;
+        }
+        CompositePass GetOrCreateComposite(int i, string tag, RenderPassEvent evt)
+        {
+            while (_poolComposite.Count <= i) _poolComposite.Add(null);
+            var p = _poolComposite[i];
+            if (p == null) { p = new CompositePass(tag, evt); _poolComposite[i] = p; }
             else { p.renderPassEvent = evt; }
             return p;
         }

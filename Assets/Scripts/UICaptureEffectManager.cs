@@ -22,11 +22,13 @@ public class UICaptureEffectManager: MonoBehaviour
     [SerializeField]
     private UICaptureComposePerLayerFeature captureFeature;
 
-    public bool IsUseBgGaussianBlur
+    public RenderTexture GetRenderTexture(string textureName)
     {
-        get
-        {
-            return captureFeature.IsUseBgGaussianBlur;
-        }
+        return captureFeature.GetRenderTexture(textureName);
+    }
+
+    public RenderTexture GetBlurRenderTexture(string textureName)
+    {
+        return captureFeature.GetBlurRenderTexture(textureName);
     }
 }

@@ -48,7 +48,7 @@ MonoBehaviour:
     m_Bits: 4294967295
   m_TransparentLayerMask:
     serializedVersion: 2
-    m_Bits: 55
+    m_Bits: 23
   m_DefaultStencilState:
     overrideStencilState: 0
     stencilReference: 0
@@ -96,15 +96,27 @@ MonoBehaviour:
       blurMip: 4.03
       gaussianSigma: 2.89
       iteration: 1
+      globalTextureName: _UI_BG
+      resolutionScale: 1
+      globalBlurAlgorithm: 0
+      globalBlurMip: 3
+      globalGaussianSigma: 2
+      globalIteration: 1
     - layer:
         serializedVersion: 2
         m_Bits: 128
-      isForeground: 1
+      isForeground: 0
       blur: 0
       blurAlgorithm: 1
       blurMip: 2.84
       gaussianSigma: 0
       iteration: 1
+      globalTextureName: _UI_BG
+      resolutionScale: 1
+      globalBlurAlgorithm: 0
+      globalBlurMip: 3
+      globalGaussianSigma: 2
+      globalIteration: 1
     - layer:
         serializedVersion: 2
         m_Bits: 256
@@ -112,13 +124,45 @@ MonoBehaviour:
       blur: 0
       blurAlgorithm: 1
       blurMip: 4.25
-      gaussianSigma: 1.82
+      gaussianSigma: 0.7
       iteration: 1
-    blurAlgorithm: -1
-    blurMip: 6.14
-    gaussianSigma: 2.01
-    iteration: 1
-    injectEvent: 400
+      globalTextureName: _UI_BG
+      resolutionScale: 1
+      globalBlurAlgorithm: -1
+      globalBlurMip: 3
+      globalGaussianSigma: 2
+      globalIteration: 1
+    - layer:
+        serializedVersion: 2
+        m_Bits: 32
+      isForeground: 0
+      blur: 0
+      blurAlgorithm: 1
+      blurMip: 4.25
+      gaussianSigma: 0.7
+      iteration: 1
+      globalTextureName: _UI_BG_0
+      resolutionScale: 1
+      globalBlurAlgorithm: -1
+      globalBlurMip: 3
+      globalGaussianSigma: 2
+      globalIteration: 1
+    - layer:
+        serializedVersion: 2
+        m_Bits: 512
+      isForeground: 0
+      blur: 0
+      blurAlgorithm: 1
+      blurMip: 4.25
+      gaussianSigma: 0.7
+      iteration: 1
+      globalTextureName: _UI_BG_1
+      resolutionScale: 1
+      globalBlurAlgorithm: 0
+      globalBlurMip: 3
+      globalGaussianSigma: 2
+      globalIteration: 1
+    injectEvent: 300
 --- !u!114 &6576797754651316054
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -133,7 +177,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Active: 1
   settings:
-    globalTextureName: _UI_BG
+    globalTextureName: _UI_BG_1
     injectEvent: 450
     replaceMaterial: {fileID: 2100000, guid: c4ad2cf383ea5e947b82b23c2f7297ea, type: 2}
     cameraTagFilter: 
