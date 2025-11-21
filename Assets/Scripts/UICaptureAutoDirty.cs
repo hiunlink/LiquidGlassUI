@@ -34,7 +34,7 @@ public class UICaptureAutoDirty : MonoBehaviour
         if (hash != _lastHash)
         {
             _lastHash = hash;
-            feature?.SetDirty(_canvas.sortingLayerID,true);
+            feature?.SetDirty(1 << _canvas.gameObject.layer,true);
         }
     }
 
@@ -48,7 +48,7 @@ public class UICaptureAutoDirty : MonoBehaviour
         if (hash != _lastHash)
         {
             _lastHash = hash;
-            feature?.SetDirty(_canvas.sortingLayerID,true);
+            feature?.SetDirty(1 << _canvas.gameObject.layer,true);
         }
     }
 

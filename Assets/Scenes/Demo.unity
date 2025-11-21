@@ -257,6 +257,59 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 240861572}
   m_CullTransparentMesh: 1
+--- !u!21 &257145822
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: UI_LiquidGlass (Auto)
+  m_Shader: {fileID: 4800000, guid: 6c289ab28ae893b4dbbf03f860ec36ef, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _UI_BG:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _UI_BG_BLUR:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _EdgeDim: 0.0025641026
+    - _Highlight: 1
+    - _RefrAberration: 33
+    - _RefrDim: 0.014957265
+    - _RefrLODBias: 1.06
+    - _RefrMag: 0.042735044
+    - _UIBG_Lod: 3.04
+    - _UseBlurBG: 1
+    m_Colors:
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _IOR: {r: 1.51, g: 1.52, b: 1.53, a: 0}
+    - _RimLightColor: {r: 1, g: 1, b: 1, a: 0.19215687}
+    - _RimLightVec: {r: -0.707, g: 0.707, b: 0, a: 0}
+    - _TintColor: {r: 0, g: 0, b: 1, a: 0.40392157}
+    - _UIBG_UVScale: {r: 1, g: 1, b: 0, a: 0}
+  m_BuildTextureStacks: []
 --- !u!21 &287920837
 Material:
   serializedVersion: 8
@@ -298,10 +351,10 @@ Material:
     - _Highlight: 1
     - _RefrAberration: 33
     - _RefrDim: 0.014957265
-    - _RefrLODBias: 1.68
+    - _RefrLODBias: 4
     - _RefrMag: 0.042735044
     - _UIBG_Lod: 3.61
-    - _UseBlurBG: 0
+    - _UseBlurBG: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _IOR: {r: 1.51, g: 1.52, b: 1.53, a: 0}
@@ -492,12 +545,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cornerRadiusPx: 90
   borderWidthPx: 4
-  blurAlgorithm: 1
+  blurAlgorithm: 2
   mipMapLod: 3.61
   refractionEdgeWidth: 35
   refractionMagnitude: 100
   chromaticAberration: 33
-  refractionLODBias: 1.68
+  refractionLODBias: 4
   edgeRimWidth: 1
   rimLight: {r: 1, g: 1, b: 1, a: 0.3529412}
   glassTint: {r: 0, g: 0, b: 0, a: 0}
@@ -566,7 +619,7 @@ MonoBehaviour:
   refractionLODBias: 4
   edgeRimWidth: 1
   rimLight: {r: 1, g: 1, b: 1, a: 0.20392157}
-  glassTint: {r: 0.2264151, g: 0.2264151, b: 0.2264151, a: 0.8666667}
+  glassTint: {r: 0.24528301, g: 0.24528301, b: 0.24528301, a: 0.6313726}
   backgroundRTName: _UI_BG
   autoAssignMaterial: 1
   continuousUpdate: 1
@@ -935,6 +988,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1066916483}
   - component: {fileID: 1066916484}
+  - component: {fileID: 1066916485}
   m_Layer: 9
   m_Name: UICanvas (1)
   m_TagString: Untagged
@@ -955,6 +1009,7 @@ RectTransform:
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 1084968848}
+  - {fileID: 1094120740}
   m_Father: {fileID: 965123220}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -985,6 +1040,20 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!114 &1066916485
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1066916482}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc5a8c1cc48241b2a544890a67fb2d18, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  feature: {fileID: 1367173693722032479, guid: 264474623b4d69344bc078bd79ea79f7, type: 2}
+  checkInterval: 0
 --- !u!1 &1084968847
 GameObject:
   m_ObjectHideFlags: 0
@@ -1022,7 +1091,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -12.1, y: -69.6}
+  m_AnchoredPosition: {x: 186.4, y: -69.6}
   m_SizeDelta: {x: 421.8, y: 300.7}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1084968849
@@ -1040,11 +1109,11 @@ MonoBehaviour:
   cornerRadiusPx: 90
   borderWidthPx: 4
   blurAlgorithm: 2
-  mipMapLod: 2.67
+  mipMapLod: 4.85
   refractionEdgeWidth: 35
   refractionMagnitude: 100
   chromaticAberration: 33
-  refractionLODBias: 4
+  refractionLODBias: 1.28
   edgeRimWidth: 1
   rimLight: {r: 1, g: 1, b: 1, a: 0.39607844}
   glassTint: {r: 1, g: 0, b: 0, a: 0.18431373}
@@ -1132,6 +1201,108 @@ CanvasRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1084968847}
+  m_CullTransparentMesh: 1
+--- !u!1 &1094120739
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1094120740}
+  - component: {fileID: 1094120743}
+  - component: {fileID: 1094120742}
+  - component: {fileID: 1094120741}
+  m_Layer: 9
+  m_Name: Image
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1094120740
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1094120739}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1066916483}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: -623.6}
+  m_SizeDelta: {x: 258.69, y: 258.1}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1094120741
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1094120739}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8266434436b64ad1a1b3e824c3694e23, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cornerRadiusPx: 90
+  borderWidthPx: 4
+  blurAlgorithm: 2
+  mipMapLod: 3.04
+  refractionEdgeWidth: 35
+  refractionMagnitude: 100
+  chromaticAberration: 33
+  refractionLODBias: 1.06
+  edgeRimWidth: 6
+  rimLight: {r: 1, g: 1, b: 1, a: 0.19215687}
+  glassTint: {r: 0, g: 0, b: 1, a: 0.40392157}
+  backgroundRTName: _UI_BG_0
+  autoAssignMaterial: 1
+  continuousUpdate: 1
+--- !u!114 &1094120742
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1094120739}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 257145822}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &1094120743
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1094120739}
   m_CullTransparentMesh: 1
 --- !u!1 &1148132110
 GameObject:
@@ -1697,7 +1868,7 @@ Material:
     - _IOR: {r: 1.51, g: 1.52, b: 1.53, a: 0}
     - _RimLightColor: {r: 1, g: 1, b: 1, a: 0.20392157}
     - _RimLightVec: {r: -0.707, g: 0.707, b: 0, a: 0}
-    - _TintColor: {r: 0.2264151, g: 0.2264151, b: 0.2264151, a: 0.8666667}
+    - _TintColor: {r: 0.24528301, g: 0.24528301, b: 0.24528301, a: 0.6313726}
     - _UIBG_UVScale: {r: 1, g: 1, b: 0, a: 0}
   m_BuildTextureStacks: []
 --- !u!1 &1769651052
@@ -1844,6 +2015,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1816375798}
   - component: {fileID: 1816375799}
+  - component: {fileID: 1816375800}
   m_Layer: 5
   m_Name: UICanvas
   m_TagString: Untagged
@@ -1895,6 +2067,20 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!114 &1816375800
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1816375797}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc5a8c1cc48241b2a544890a67fb2d18, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  feature: {fileID: 1367173693722032479, guid: 264474623b4d69344bc078bd79ea79f7, type: 2}
+  checkInterval: 0
 --- !u!1 &1873718843
 GameObject:
   m_ObjectHideFlags: 0
@@ -2109,7 +2295,7 @@ Camera:
   m_GameObject: {fileID: 1901480888}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 2
+  m_ClearFlags: 4
   m_BackGroundColor: {r: 0, g: 0, b: 0, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
@@ -2310,9 +2496,9 @@ Material:
     - _Highlight: 1
     - _RefrAberration: 33
     - _RefrDim: 0.014957265
-    - _RefrLODBias: 4
+    - _RefrLODBias: 1.28
     - _RefrMag: 0.042735044
-    - _UIBG_Lod: 2.67
+    - _UIBG_Lod: 4.85
     - _UseBlurBG: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}

@@ -309,8 +309,6 @@ Shader "Hidden/UI_LiquidGlass"
             half4 frag(V i):SV_Target
             {
                 half4 t = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
-                // 仅“不透明”部分
-                clip(t.a - 1);
                 #if defined(FG_PREPASS_DRAW_COLOR)
                 return t * i.c;
                 #else
