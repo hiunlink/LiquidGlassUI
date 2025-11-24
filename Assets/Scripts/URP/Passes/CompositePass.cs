@@ -33,7 +33,8 @@ namespace URP.Passes
 
         public void SetMaterial(Material compositeMat)
         {
-            _compositeMat = new Material(compositeMat);
+            if (!_compositeMat) 
+                _compositeMat = new Material(compositeMat);
         }
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {

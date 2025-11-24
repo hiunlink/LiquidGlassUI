@@ -81,8 +81,10 @@ namespace URP.Passes
 
         public void SetSharedMaterials(Material gaussianMat, Material compositeCopyMat)
         {
-            _gaussianMat  = new Material(gaussianMat);
-            _compositeMat = new Material(compositeCopyMat);
+            if (!_gaussianMat)
+                _gaussianMat  = new Material(gaussianMat);
+            if (!_compositeMat)
+                _compositeMat = new Material(compositeCopyMat);
         }
 
         public void SetParams(
@@ -117,7 +119,7 @@ namespace URP.Passes
             // 生成mipMap
             if (_mipMap > 0)
             {
-                var g = CommandBufferPool.Get(_tagComposite + ".GenMips");
+                var g = CommandBufferPool.Get(_tagComposite);
                 g.GenerateMips(_srcRT);
                 ctx.ExecuteCommandBuffer(g);
                 CommandBufferPool.Release(g);

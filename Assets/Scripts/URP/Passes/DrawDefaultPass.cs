@@ -15,6 +15,8 @@ namespace URP.Passes
         bool _useStencilNotEqual1;
 
         RenderStateBlock _rsb;
+        private ProfilingSampler _profilingSampler;
+        private FilteringSettings _fs;
 
         public DrawDefaultPass(string tag, RenderPassEvent evt)
             : base(tag, evt)
@@ -40,28 +42,29 @@ namespace URP.Passes
                 new ShaderTagId("UniversalForwardOnly"),
                 new ShaderTagId("SRPDefaultUnlit"),
             };
+            
+            _profilingSampler = new ProfilingSampler(tag);
         }
 
         public void Setup(LayerMask layer, bool useStencilNotEqual1)
         {
             _layer = layer;
             _useStencilNotEqual1 = useStencilNotEqual1;
+            _fs = new FilteringSettings(RenderQueueRange.all, _layer);
         }
 
         public override void Execute(ScriptableRenderContext ctx, ref RenderingData data)
         {
             var cmd = CommandBufferPool.Get(tag);
-            using (new ProfilingScope(cmd, new ProfilingSampler(tag)))
+            using (new ProfilingScope(cmd, _profilingSampler))
             {
                 ctx.ExecuteCommandBuffer(cmd); cmd.Clear();
 
                 var ds = CreateDrawingSettings(k_DefaultTags, ref data, SortingCriteria.CommonTransparent);
-                var fs = new FilteringSettings(RenderQueueRange.all, _layer);
-
                 if (_useStencilNotEqual1)
-                    ctx.DrawRenderers(data.cullResults, ref ds, ref fs, ref _rsb);
+                    ctx.DrawRenderers(data.cullResults, ref ds, ref _fs, ref _rsb);
                 else
-                    ctx.DrawRenderers(data.cullResults, ref ds, ref fs);
+                    ctx.DrawRenderers(data.cullResults, ref ds, ref _fs);
             }
             ctx.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);

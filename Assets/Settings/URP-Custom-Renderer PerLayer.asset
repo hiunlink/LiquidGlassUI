@@ -99,13 +99,12 @@ MonoBehaviour:
       globalTextureName: _UI_BG
       resolutionScale: 1
       globalBlurAlgorithm: 0
-      globalBlurMip: 3
       globalGaussianSigma: 2
       globalIteration: 1
     - layer:
         serializedVersion: 2
         m_Bits: 128
-      isForeground: 1
+      isForeground: 0
       blur: 0
       blurAlgorithm: 1
       blurMip: 2.84
@@ -114,7 +113,6 @@ MonoBehaviour:
       globalTextureName: _UI_BG
       resolutionScale: 1
       globalBlurAlgorithm: 0
-      globalBlurMip: 3
       globalGaussianSigma: 2
       globalIteration: 1
     - layer:
@@ -124,13 +122,12 @@ MonoBehaviour:
       blur: 0
       blurAlgorithm: 1
       blurMip: 4.25
-      gaussianSigma: 0.7
+      gaussianSigma: 3.54
       iteration: 1
       globalTextureName: _UI_BG
       resolutionScale: 1
       globalBlurAlgorithm: -1
-      globalBlurMip: 3
-      globalGaussianSigma: 2
+      globalGaussianSigma: 3.29
       globalIteration: 1
     - layer:
         serializedVersion: 2
@@ -143,14 +140,13 @@ MonoBehaviour:
       iteration: 1
       globalTextureName: _UI_BG_0
       resolutionScale: 1
-      globalBlurAlgorithm: -1
-      globalBlurMip: 3.65
+      globalBlurAlgorithm: 1
       globalGaussianSigma: 2.8
       globalIteration: 1
     - layer:
         serializedVersion: 2
         m_Bits: 512
-      isForeground: 1
+      isForeground: 0
       blur: 0
       blurAlgorithm: 1
       blurMip: 4.25
@@ -159,7 +155,6 @@ MonoBehaviour:
       globalTextureName: _UI_BG_1
       resolutionScale: 1
       globalBlurAlgorithm: 0
-      globalBlurMip: 3
       globalGaussianSigma: 1.91
       globalIteration: 1
     injectEvent: 300

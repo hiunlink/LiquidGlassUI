@@ -30,6 +30,9 @@ namespace URP
 
     public class UICaptureComposePerLayerFeature : ScriptableRendererFeature
     {
+        private const string ClearRtTag = "ClearRT";
+        private const string BlitRtTag = "BlitRT";
+
         // ========== 可配置结构 ==========
         [System.Serializable]
         public class LayerConfig
@@ -59,7 +62,6 @@ namespace URP
             [Header("输出分辨率缩放")]
             [Range(0.25f, 1f)] public float resolutionScale = 1f;
             public GlobalBlurAlgorithm globalBlurAlgorithm = GlobalBlurAlgorithm.MipChain;
-            [Range(0, 8)] public float globalBlurMip = 3;
             [Range(0f, 6f)] public float globalGaussianSigma = 2.0f;
             [Range(1, 5)] public int globalIteration = 1;
             // 是否需要重新绘制
@@ -112,13 +114,19 @@ namespace URP
         class GenMipsPass : ScriptableRenderPass
         {
             RTHandle _target; bool _doGen; readonly string _tag;
-            public GenMipsPass(string tag, RenderPassEvent evt){ this._tag=tag; renderPassEvent=evt; }
+            private ProfilingSampler _profilingSampler;
+
+            public GenMipsPass(string tag, RenderPassEvent evt)
+            {
+                this._tag=tag; renderPassEvent=evt;
+                _profilingSampler = new ProfilingSampler(_tag);
+            }
             public void Setup(RTHandle rt, bool gen){ _target=rt; _doGen=gen; }
             public override void Execute(ScriptableRenderContext ctx, ref RenderingData data)
             {
                 if (!_doGen || _target==null) return;
                 var cmd = CommandBufferPool.Get(_tag);
-                using (new ProfilingScope(cmd, new ProfilingSampler(_tag))) cmd.GenerateMips(_target);
+                using (new ProfilingScope(cmd, _profilingSampler)) cmd.GenerateMips(_target);
                 ctx.ExecuteCommandBuffer(cmd); CommandBufferPool.Release(cmd);
             }
         }
@@ -142,9 +150,12 @@ namespace URP
         readonly List<DrawDefaultPass>       _poolDrawDef = new();
         readonly List<MipChainBlurPass>      _poolMipBlur = new();
         readonly List<GenMipsPass>           _poolGenMips = new();
+        readonly List<GenMipsPass>           _poolGenMips2 = new();
         readonly List<GaussianWrapperPass>   _poolGaussian = new();
         readonly List<GaussianWrapperPass>   _poolGaussian2 = new();
         readonly List<OneShot>               _poolOneShot = new();
+        readonly List<OneShot>               _poolOneShot2 = new();
+        readonly List<OneShot>               _poolOneShot3 = new();
         readonly List<CompositePass>         _poolComposite = new();
         
         // 临时排队列表（仅存引用，不 new 实例）
@@ -348,7 +359,7 @@ namespace URP
                 // 模糊层是否叠加
                 if (config.blur && !settings.multiLayerMix)
                 {
-                    var clear = GetOrCreateOneShot(1, CmdClearRT(_blurRT), evt);
+                    var clear = GetOrCreateOneShot2(j, CmdClearRT(_blurRT), evt);
                     _tempPasses.Add(clear);
                     evt++;
                 }
@@ -359,7 +370,7 @@ namespace URP
                 // 在模糊层叠加渲染时需要先blit
                 if (config.blur && settings.multiLayerMix)
                 {
-                    _tempPasses.Add(GetOrCreateOneShot(2, CmdBlitRT(_baseCol, _blurRT), evt));
+                    _tempPasses.Add(GetOrCreateOneShot3(j, CmdBlitRT(_baseCol, _blurRT), evt));
                     evt++;
                 }
                 if (config.isForeground)
@@ -426,7 +437,7 @@ namespace URP
                 // ---------- Phase M：最终 baseRT 也要有 MIP ----------
                 if (generateMips)
                 {
-                    var pm = GetOrCreateGenMip(j,"M.Mips(baseRT)", evt);
+                    var pm = GetOrCreateGenMip(j,"P.GlobalMips(baseRT)", evt);
                     pm.Setup(_baseCol, generateMips);
                     _tempPasses.Add(pm);
                     evt++;
@@ -443,7 +454,7 @@ namespace URP
                     _tempPasses.Add(globalBlur);
                     evt++;
                 
-                    var pm = GetOrCreateGenMip(j,"M.Mips(BlurRT)", evt);
+                    var pm = GetOrCreateGenMip2(j,"M.GlobalMips(BlurRT)", evt);
                     pm.Setup(_blurRT, generateMips);
                     _tempPasses.Add(pm);
                     evt++;
@@ -527,9 +538,9 @@ namespace URP
                 };
 
                 
-                _baseCol = RTHandles.Alloc(col, FilterMode.Bilinear, name: layerGlobalTextureInfo.globalTextureName);
-                _baseDS  = RTHandles.Alloc(ds,  name: layerGlobalTextureInfo.globalTextureName+"_DS");
-                _blurRT  = RTHandles.Alloc(blur,FilterMode.Bilinear, name: layerGlobalTextureInfo.globalTextureName+"_BLUR", wrapMode: TextureWrapMode.Clamp);
+                _baseCol = RTHandles.Alloc(col, FilterMode.Bilinear, name: layerGlobalTextureInfo.globalTextureName, wrapMode: TextureWrapMode.Clamp);
+                _baseDS  = RTHandles.Alloc(ds,  name: GetDsString(layerGlobalTextureInfo.globalTextureName), wrapMode: TextureWrapMode.Clamp);
+                _blurRT  = RTHandles.Alloc(blur,FilterMode.Bilinear, name: GetBlurString(layerGlobalTextureInfo.globalTextureName), wrapMode: TextureWrapMode.Clamp);
                 _tempRTMap[layerGlobalTextureInfo.globalTextureName] = new GlobalTextures()
                 {
                     BaseCol = _baseCol,
@@ -544,13 +555,28 @@ namespace URP
             _blurRT = rtInfo.BlurRT;
             
             _gid = Shader.PropertyToID(layerGlobalTextureInfo.globalTextureName);
-            _blurGid = Shader.PropertyToID(layerGlobalTextureInfo.globalTextureName+"_BLUR");
+            _blurGid = Shader.PropertyToID(GetBlurString(layerGlobalTextureInfo.globalTextureName));
         }
-
+        
         // ========== 小工具 ==========
+        private Dictionary<string, string> _dsStringMap = new (); 
+        private Dictionary<string, string> _blurStringMap = new (); 
+        string GetDsString(string textureName)
+        {
+            if (!_dsStringMap.ContainsKey(textureName))
+                _dsStringMap[textureName] = textureName + "_DS";    
+            return _dsStringMap[textureName];
+            
+        }
+        string GetBlurString(string textureName)
+        {
+            if (!_blurStringMap.ContainsKey(textureName))
+                _blurStringMap[textureName] = textureName + "_BLUR";    
+            return _blurStringMap[textureName];
+        }
         static CommandBuffer CmdClearRT(RTHandle rt, RTHandle ds = null)
         {
-            var cmd = CommandBufferPool.Get("ClearRT");
+            var cmd = CommandBufferPool.Get(ClearRtTag);
             if (ds == null)
                 cmd.SetRenderTarget(rt);
             else
@@ -562,7 +588,7 @@ namespace URP
         }
         static CommandBuffer CmdBlitRT(RTHandle src, RTHandle dst)
         {
-            var cmd = CommandBufferPool.Get("BlitRT");
+            var cmd = CommandBufferPool.Get(BlitRtTag);
             cmd.Blit(src,dst);
             return cmd;
         }
@@ -743,6 +769,14 @@ namespace URP
             else { p.renderPassEvent = evt; }
             return p;
         }
+        GenMipsPass GetOrCreateGenMip2(int i, string tag, RenderPassEvent evt)
+        {
+            while (_poolGenMips2.Count <= i) _poolGenMips2.Add(null);
+            var p = _poolGenMips2[i];
+            if (p == null) { p = new GenMipsPass(tag, evt); _poolGenMips2[i] = p; }
+            else { p.renderPassEvent = evt; }
+            return p;
+        }
         CompositePass GetOrCreateComposite(int i, string tag, RenderPassEvent evt)
         {
             while (_poolComposite.Count <= i) _poolComposite.Add(null);
@@ -796,10 +830,26 @@ namespace URP
 
         OneShot GetOrCreateOneShot(int i, CommandBuffer cmd, RenderPassEvent evt)
         {
-            return new OneShot(cmd, evt);
+            //return new OneShot(cmd, evt);
             while (_poolOneShot.Count <= i) _poolOneShot.Add(null);
             var p = _poolOneShot[i];
             if (p == null) { p = new OneShot(cmd, evt); _poolOneShot[i] = p; }
+            else { p.renderPassEvent = evt; p.Setup(cmd); }
+            return p;
+        }
+        OneShot GetOrCreateOneShot2(int i, CommandBuffer cmd, RenderPassEvent evt)
+        {
+            while (_poolOneShot2.Count <= i) _poolOneShot2.Add(null);
+            var p = _poolOneShot2[i];
+            if (p == null) { p = new OneShot(cmd, evt); _poolOneShot2[i] = p; }
+            else { p.renderPassEvent = evt; p.Setup(cmd); }
+            return p;
+        }
+        OneShot GetOrCreateOneShot3(int i, CommandBuffer cmd, RenderPassEvent evt)
+        {
+            while (_poolOneShot3.Count <= i) _poolOneShot3.Add(null);
+            var p = _poolOneShot3[i];
+            if (p == null) { p = new OneShot(cmd, evt); _poolOneShot3[i] = p; }
             else { p.renderPassEvent = evt; p.Setup(cmd); }
             return p;
         }

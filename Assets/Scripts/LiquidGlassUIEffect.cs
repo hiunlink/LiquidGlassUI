@@ -83,7 +83,7 @@ public class LiquidGlassUIEffect : UIBehaviour
     static readonly int ID_UI_BG = Shader.PropertyToID("_UI_BG");
     static readonly int ID_UI_BG_BLUR = Shader.PropertyToID("_UI_BG_BLUR");
 
-    private static LocalKeyword KW_WITHOUT_BG;
+    private LocalKeyword KW_WITHOUT_BG;
     
     const string ShaderName = "Hidden/UI_LiquidGlass";
 
@@ -167,7 +167,6 @@ public class LiquidGlassUIEffect : UIBehaviour
 
         var shader = Shader.Find(ShaderName);
         if (shader == null) return;
-        KW_WITHOUT_BG = new LocalKeyword(shader,"WITHOUT_UI_BG");
         var curr = _graphic.material;
         string currName = (curr != null && curr.shader != null) ? curr.shader.name : string.Empty;
 
@@ -218,8 +217,9 @@ public class LiquidGlassUIEffect : UIBehaviour
         var border = Mathf.Max(0f, borderWidthPx) / canvasH;
         var rectUVOffset = new Vector2( _rt.anchoredPosition.x / canvasW, _rt.anchoredPosition.y / canvasH );
 
-        _bgRT = UICaptureEffectManager.Instance.GetRenderTexture(backgroundRTName);
-        _blurRT = UICaptureEffectManager.Instance.GetBlurRenderTexture(backgroundRTName);
+        _bgRT = UICaptureEffectManager.Instance?.GetRenderTexture(backgroundRTName);
+        _blurRT = UICaptureEffectManager.Instance?.GetBlurRenderTexture(backgroundRTName);
+        KW_WITHOUT_BG = new LocalKeyword(mat.shader,"WITHOUT_UI_BG");
         if (_bgRT == null || _blurRT == null)
         {
             mat.EnableKeyword(KW_WITHOUT_BG);

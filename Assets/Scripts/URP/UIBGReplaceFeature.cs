@@ -6,6 +6,8 @@ namespace URP
 {
     public class UIBGReplaceFeature : ScriptableRendererFeature
     {
+        private static readonly int ID_MainTex = Shader.PropertyToID("_MainTex");
+
         [System.Serializable]
         public class Settings
         {
@@ -17,32 +19,37 @@ namespace URP
 
         class ReplacePass : ScriptableRenderPass
         {
-            Settings s;
-            int _srcID;
+            private readonly Settings _s;
+            private readonly int _srcID;
+            private readonly string _tag;
+            private readonly ProfilingSampler _profilingSampler;
 
             public ReplacePass(Settings s)
             {
-                this.s = s;
+                this._s = s;
+                _tag = "UIBG Replace";
                 renderPassEvent = s.injectEvent - 1;
                 _srcID = Shader.PropertyToID(s.globalTextureName);
+                
+                _profilingSampler = new ProfilingSampler(_tag);
             }
 
             public override void Execute(ScriptableRenderContext ctx, ref RenderingData data)
             {
                 var cam = data.cameraData.camera;
-                if (!string.IsNullOrEmpty(s.cameraTagFilter) && cam.tag != s.cameraTagFilter) return;
-                if (s.replaceMaterial == null) return;
+                if (!string.IsNullOrEmpty(_s.cameraTagFilter) && !cam.CompareTag(_s.cameraTagFilter)) return;
+                if (_s.replaceMaterial == null) return;
 
                 var src = Shader.GetGlobalTexture(_srcID);
                 if (src == null) return;
 
-                var cmd = CommandBufferPool.Get("UIBG Replace");
-                using (new ProfilingScope(cmd, new ProfilingSampler("UIBG Replace")))
+                var cmd = CommandBufferPool.Get(_tag);
+                using (new ProfilingScope(cmd, _profilingSampler))
                 {
-                    var dstId = data.cameraData.renderer.cameraColorTarget;
-                    s.replaceMaterial.SetTexture("_MainTex", src);
+                    var dstId = data.cameraData.renderer.cameraColorTargetHandle;
+                    _s.replaceMaterial.SetTexture(ID_MainTex, src);
                     cmd.SetRenderTarget(dstId);
-                    cmd.DrawProcedural(Matrix4x4.identity, s.replaceMaterial, 0, MeshTopology.Triangles, 3, 1);
+                    cmd.DrawProcedural(Matrix4x4.identity, _s.replaceMaterial, 0, MeshTopology.Triangles, 3, 1);
                 }
 
                 ctx.ExecuteCommandBuffer(cmd);
