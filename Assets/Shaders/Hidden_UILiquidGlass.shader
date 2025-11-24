@@ -46,7 +46,8 @@ Shader "Hidden/UI_LiquidGlass"
             HLSLPROGRAM
             #pragma vertex Vert
             #pragma fragment Frag
-            #pragma multi_compile_local __ DBG_SDF DBG_REFR_REGION DBG_REFR_UV DBG_TINT_REGION DBG_TINT_UV DBG_TINT_EDGE_LIGHT DBG_TINT_EDGE_REFL
+            #pragma multi_compile_local _ WITHOUT_UI_BG
+            //#pragma multi_compile_local __ DBG_SDF DBG_REFR_REGION DBG_REFR_UV DBG_TINT_REGION DBG_TINT_UV DBG_TINT_EDGE_LIGHT DBG_TINT_EDGE_REFL
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
@@ -56,6 +57,7 @@ Shader "Hidden/UI_LiquidGlass"
             TEXTURE2D(_UI_BG_BLUR);   SAMPLER(sampler_UI_BG_BLUR);
             //#define DBG_SDF
             //#define DBG_TINT_EDGE_REFL
+            //#define WITHOUT_UI_BG
             
             float2 _RectUVOffset;   // 界面元素位置
             float4 _Color;
@@ -185,6 +187,23 @@ Shader "Hidden/UI_LiquidGlass"
                     return float4(c, 1);
                 }
                 #endif
+                // rim
+                float rimIntensity = abs( dot( normalize(nrm), normalize(_RimLightVec) ) );
+                float3 rimLight = _RimLightColor.rgb * _RimLightColor.a * rimIntensity;
+                // --- Tint / Rim / Reflection ---
+                float a = interior;
+                float bnd = Lerp01(-_EdgeDim, 0.0, d);
+                float edge = min(a, bnd);
+                float cosEdge = 1.0 - cos(edge * 3.14159265 * 0.5);
+                // --- without UI_BG ---
+                #if defined(WITHOUT_UI_BG)
+                // interior tint for legibility
+                float3 rimLightCol = rimLight * cosEdge;
+                float rimAlpha = cosEdge * rimIntensity * _RimLightColor.a;
+                float4 colWoBG = float4(BlendScreen(_TintColor.rgb, rimLightCol), _TintColor.a * interior + rimAlpha);
+                return colWoBG;
+                #endif
+                
                 float3 baseCol = SampleBG(bgUV, 0.0);
 
                 float3 ior = lerp( float3(_IOR.y, _IOR.y, _IOR.y), _IOR.xyz, _RefrAberration);
@@ -204,18 +223,8 @@ Shader "Hidden/UI_LiquidGlass"
 
                 float3 col = lerp(baseCol, blurWarped, interior);
 
-                // --- Tint / Rim / Reflection ---
-                float a = interior;
-                float bnd = Lerp01(-_EdgeDim, 0.0, d);
-                float edge = min(a, bnd);
-                float cosEdge = 1.0 - cos(edge * 3.14159265 * 0.5);
-
                 // interior tint for legibility
                 col = lerp(col, _TintColor.rgb, _TintColor.a * interior);
-
-                // rim
-                float rimIntensity = abs( dot( normalize(nrm), normalize(_RimLightVec) ) );
-                float3 rimLight = _RimLightColor.rgb * _RimLightColor.a * rimIntensity;
 
                 // simple reflection sample: offset outward along normal
                 #if defined(ENABLE_REFLECTION)
@@ -252,7 +261,7 @@ Shader "Hidden/UI_LiquidGlass"
             }
             ENDHLSL
         }
-
+        
         Pass
         {
             Name "StencilPrepass"
