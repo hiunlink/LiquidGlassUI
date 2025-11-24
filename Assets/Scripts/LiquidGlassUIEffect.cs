@@ -3,6 +3,7 @@ using UnityEditor;
 #endif
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Rendering;
 using UnityEngine.UI;
 using URP;
 
@@ -61,6 +62,9 @@ public class LiquidGlassUIEffect : UIBehaviour
     Graphic _graphic;
     Canvas _canvas;
 
+    private RenderTexture _bgRT;
+    private RenderTexture _blurRT;
+
     static readonly int ID_HalfSize   = Shader.PropertyToID("_RoundedRectHalfSize");
     static readonly int ID_Radius     = Shader.PropertyToID("_RoundedRadius");
     static readonly int ID_Border     = Shader.PropertyToID("_BorderWidth");
@@ -78,6 +82,8 @@ public class LiquidGlassUIEffect : UIBehaviour
     static readonly int ID_RimLightColor = Shader.PropertyToID("_RimLightColor");
     static readonly int ID_UI_BG = Shader.PropertyToID("_UI_BG");
     static readonly int ID_UI_BG_BLUR = Shader.PropertyToID("_UI_BG_BLUR");
+
+    private static LocalKeyword KW_WITHOUT_BG;
     
     const string ShaderName = "Hidden/UI_LiquidGlass";
 
@@ -161,7 +167,7 @@ public class LiquidGlassUIEffect : UIBehaviour
 
         var shader = Shader.Find(ShaderName);
         if (shader == null) return;
-
+        KW_WITHOUT_BG = new LocalKeyword(shader,"WITHOUT_UI_BG");
         var curr = _graphic.material;
         string currName = (curr != null && curr.shader != null) ? curr.shader.name : string.Empty;
 
@@ -212,8 +218,19 @@ public class LiquidGlassUIEffect : UIBehaviour
         var border = Mathf.Max(0f, borderWidthPx) / canvasH;
         var rectUVOffset = new Vector2( _rt.anchoredPosition.x / canvasW, _rt.anchoredPosition.y / canvasH );
 
-        mat.SetTexture(ID_UI_BG, UICaptureEffectManager.Instance.GetRenderTexture(backgroundRTName));
-        mat.SetTexture(ID_UI_BG_BLUR, UICaptureEffectManager.Instance.GetBlurRenderTexture(backgroundRTName));
+        _bgRT = UICaptureEffectManager.Instance.GetRenderTexture(backgroundRTName);
+        _blurRT = UICaptureEffectManager.Instance.GetBlurRenderTexture(backgroundRTName);
+        if (_bgRT == null || _blurRT == null)
+        {
+            mat.EnableKeyword(KW_WITHOUT_BG);
+        }
+        else
+        {
+            mat.DisableKeyword(KW_WITHOUT_BG);
+            mat.SetTexture(ID_UI_BG, _bgRT);
+            mat.SetTexture(ID_UI_BG_BLUR, _blurRT);
+        }
+        
         
         // Push to material
         mat.SetVector(ID_HalfSize, halfSize);
