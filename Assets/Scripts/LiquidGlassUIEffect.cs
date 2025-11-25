@@ -198,13 +198,13 @@ public class LiquidGlassUIEffect : UIBehaviour
     void SetParamsOnMaterialInstance()
     {
         CacheComponents();
-        if (_graphic == null) return;
-        if (_rt == null) _rt = GetComponent<RectTransform>();
-        if (_canvas == null) _canvas = _graphic.canvas;
-        if (_canvas == null) return;
+        if (!_graphic) return;
+        if (!_rt) _rt = GetComponent<RectTransform>();
+        if (!_canvas) _canvas = _graphic.canvas;
+        if (!_canvas) return;
 
         var mat = _graphic.materialForRendering; // per-instance instance used by UI
-        if (mat == null) return;
+        if (!mat) return;
 
         var canvasH = Mathf.Max(1f, _canvas.pixelRect.height);
         var canvasW = Mathf.Max(1f, _canvas.pixelRect.width);
@@ -220,7 +220,7 @@ public class LiquidGlassUIEffect : UIBehaviour
         _bgRT = UICaptureEffectManager.Instance?.GetRenderTexture(backgroundRTName);
         _blurRT = UICaptureEffectManager.Instance?.GetBlurRenderTexture(backgroundRTName);
         KW_WITHOUT_BG = new LocalKeyword(mat.shader,"WITHOUT_UI_BG");
-        if (_bgRT == null || _blurRT == null)
+        if (!_bgRT || !_blurRT)
         {
             mat.EnableKeyword(KW_WITHOUT_BG);
         }

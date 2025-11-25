@@ -104,7 +104,7 @@ MonoBehaviour:
     - layer:
         serializedVersion: 2
         m_Bits: 128
-      isForeground: 0
+      isForeground: 1
       blur: 0
       blurAlgorithm: 1
       blurMip: 2.84

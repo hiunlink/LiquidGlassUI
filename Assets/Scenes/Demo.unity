@@ -268,7 +268,8 @@ Material:
   m_Shader: {fileID: 4800000, guid: 6c289ab28ae893b4dbbf03f860ec36ef, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - WITHOUT_UI_BG
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -347,18 +348,18 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _EdgeDim: 0.00042735043
+    - _EdgeDim: 0.00085470086
     - _Highlight: 1
     - _RefrAberration: 33
     - _RefrDim: 0.014957265
-    - _RefrLODBias: 4
+    - _RefrLODBias: 0.86
     - _RefrMag: 0.042735044
-    - _UIBG_Lod: 3.61
-    - _UseBlurBG: 1
+    - _UIBG_Lod: 4.04
+    - _UseBlurBG: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _IOR: {r: 1.51, g: 1.52, b: 1.53, a: 0}
-    - _RimLightColor: {r: 1, g: 1, b: 1, a: 0.3529412}
+    - _RimLightColor: {r: 1, g: 1, b: 1, a: 0.25490198}
     - _RimLightVec: {r: -0.707, g: 0.707, b: 0, a: 0}
     - _TintColor: {r: 0, g: 0, b: 0, a: 0}
     - _UIBG_UVScale: {r: 1, g: 1, b: 0, a: 0}
@@ -545,14 +546,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cornerRadiusPx: 90
   borderWidthPx: 4
-  blurAlgorithm: 2
-  mipMapLod: 3.61
+  blurAlgorithm: 1
+  mipMapLod: 4.04
   refractionEdgeWidth: 35
   refractionMagnitude: 100
   chromaticAberration: 33
-  refractionLODBias: 4
-  edgeRimWidth: 1
-  rimLight: {r: 1, g: 1, b: 1, a: 0.3529412}
+  refractionLODBias: 0.86
+  edgeRimWidth: 2
+  rimLight: {r: 1, g: 1, b: 1, a: 0.25490198}
   glassTint: {r: 0, g: 0, b: 0, a: 0}
   backgroundRTName: _UI_BG
   autoAssignMaterial: 1
@@ -612,11 +613,11 @@ MonoBehaviour:
   cornerRadiusPx: 90
   borderWidthPx: 4
   blurAlgorithm: 2
-  mipMapLod: 8
+  mipMapLod: 3.87
   refractionEdgeWidth: 35
   refractionMagnitude: 100
   chromaticAberration: 33
-  refractionLODBias: 4
+  refractionLODBias: 1.85
   edgeRimWidth: 1
   rimLight: {r: 1, g: 1, b: 1, a: 0.20392157}
   glassTint: {r: 0.24528301, g: 0.24528301, b: 0.24528301, a: 0.6313726}
@@ -1117,7 +1118,7 @@ MonoBehaviour:
   edgeRimWidth: 1
   rimLight: {r: 1, g: 1, b: 1, a: 0.39607844}
   glassTint: {r: 1, g: 0, b: 0, a: 0.18431373}
-  backgroundRTName: _UI_BG_0
+  backgroundRTName: _UI_BG_2
   autoAssignMaterial: 1
   continuousUpdate: 1
 --- !u!114 &1084968850
@@ -1263,7 +1264,7 @@ MonoBehaviour:
   edgeRimWidth: 6
   rimLight: {r: 1, g: 1, b: 1, a: 0.19215687}
   glassTint: {r: 0, g: 0, b: 1, a: 0.40392157}
-  backgroundRTName: _UI_BG_0
+  backgroundRTName: _UI_BG_2
   autoAssignMaterial: 1
   continuousUpdate: 1
 --- !u!114 &1094120742
@@ -1859,9 +1860,9 @@ Material:
     - _Highlight: 0
     - _RefrAberration: 33
     - _RefrDim: 0.014957265
-    - _RefrLODBias: 4
+    - _RefrLODBias: 1.85
     - _RefrMag: 0.042735044
-    - _UIBG_Lod: 8
+    - _UIBG_Lod: 3.87
     - _UseBlurBG: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
@@ -2466,7 +2467,8 @@ Material:
   m_Shader: {fileID: 4800000, guid: 6c289ab28ae893b4dbbf03f860ec36ef, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - WITHOUT_UI_BG
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
