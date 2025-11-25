@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace URP
+namespace UICaptureCompose.URP
 {
     internal static class UICaptureComposePerLayerTagUtils
     {

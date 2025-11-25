@@ -2,7 +2,7 @@
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-namespace URP.Passes
+namespace UICaptureCompose.URP.Passes
 {
     /// <summary>
     /// MIP 链模糊合成（不负责清屏 & 不负责采集层）。

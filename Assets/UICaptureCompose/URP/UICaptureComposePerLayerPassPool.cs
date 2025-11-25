@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
+using UICaptureCompose.URP.Passes;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
-using URP.Passes;
 
-namespace URP
+namespace UICaptureCompose.URP
 {
     // ======== Pass 池：获取或创建 ==========
     internal static class UICaptureComposePerLayerPassPool

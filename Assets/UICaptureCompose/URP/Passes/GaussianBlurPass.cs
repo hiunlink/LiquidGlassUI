@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-namespace URP.Passes
+namespace UICaptureCompose.URP.Passes
 {
     /// <summary>
     /// 高斯分离模糊（不负责清屏 & 不负责采集层）。

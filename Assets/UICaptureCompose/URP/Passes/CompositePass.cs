@@ -2,7 +2,7 @@
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-namespace URP.Passes
+namespace UICaptureCompose.URP.Passes
 {
     public class CompositePass: ScriptableRenderPass
     {

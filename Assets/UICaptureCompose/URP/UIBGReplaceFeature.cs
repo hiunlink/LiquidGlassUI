@@ -2,7 +2,7 @@
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-namespace URP
+namespace UICaptureCompose.URP
 {
     public class UIBGReplaceFeature : ScriptableRendererFeature
     {

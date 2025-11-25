@@ -2,7 +2,7 @@
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-namespace URP.Passes
+namespace UICaptureCompose.URP.Passes
 {
     // 使用指定 LightMode 绘制某个 Layer；可开关 FG_PREPASS_DRAW_COLOR 关键字
     internal class DrawWithLightModePass : BasePass

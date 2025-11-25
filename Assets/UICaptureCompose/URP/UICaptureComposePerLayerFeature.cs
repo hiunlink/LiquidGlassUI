@@ -6,13 +6,13 @@
 
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
-using UnityEngine.Experimental.Rendering;
-using TagUtils = URP.UICaptureComposePerLayerTagUtils;
-using PassPool = URP.UICaptureComposePerLayerPassPool;
+using TagUtils = UICaptureCompose.URP.UICaptureComposePerLayerTagUtils;
+using PassPool = UICaptureCompose.URP.UICaptureComposePerLayerPassPool;
 
-namespace URP
+namespace UICaptureCompose.URP
 {
     // 模糊算法
     public enum BlurAlgorithm

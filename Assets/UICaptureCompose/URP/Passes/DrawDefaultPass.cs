@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-namespace URP.Passes
+namespace UICaptureCompose.URP.Passes
 {
     // 用默认 URP Tag 绘制某个 Layer；可选强制 Stencil NotEqual 1（用于背景回填/合成阶段）
     internal class DrawDefaultPass : BasePass
