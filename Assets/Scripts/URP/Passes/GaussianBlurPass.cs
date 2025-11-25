@@ -39,6 +39,7 @@ namespace URP.Passes
 
         private int _iteration = 1;
         private float _mipMap = 0;
+        private Color _color = Color.clear;
         float _sigma;         // 连续可调
         float _tinyThreshold; // 小阈值（<= 则跳过模糊）
 
@@ -51,6 +52,7 @@ namespace URP.Passes
         static readonly int _Sigma      = Shader.PropertyToID("_Sigma");
         static readonly int _MipMap      = Shader.PropertyToID("_MipMap");
         static readonly int _StencilRef = Shader.PropertyToID("_StencilRef");
+        static readonly int _AlphaBlendCol = Shader.PropertyToID("_AlphaBlendCol");
 
         public GaussianBlurPass(
             string tagPrefix,
@@ -91,12 +93,14 @@ namespace URP.Passes
             int iteration,
             float sigma,
             float mipMap,
+            Color alphaBlendColor,
             bool useStencilNotEqual,
             bool useStencilNotEqualComposite,
             int stencilVal)
         {
             _sigma         = Mathf.Max(0f, sigma);
             _tinyThreshold = 0;
+            _color = alphaBlendColor;
 
             _useStencilNotEqual = useStencilNotEqual;
             _useStencilNotEqualComposite = useStencilNotEqualComposite;
@@ -174,6 +178,7 @@ namespace URP.Passes
             _compositeMat.SetTexture(_SourceTex, blurInputTex);
             if (_compositeMat.HasProperty(_StencilRef))
                 _compositeMat.SetInt(_StencilRef, _stencilVal);
+            _compositeMat.SetColor(_AlphaBlendCol, _color);
 
             cmdC.DrawProcedural(Matrix4x4.identity, _compositeMat, passIndex, MeshTopology.Triangles, 3, 1);
             ctx.ExecuteCommandBuffer(cmdC);

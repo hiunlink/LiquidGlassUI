@@ -95,8 +95,9 @@ namespace URP
                 => _inner.Setup(src,tmp,dst,baseCol,baseDS);
             public void SetSharedMaterials(Material gauss, Material copy)
                 => _inner.SetSharedMaterials(gauss, copy); // 需要在你的类里添加
-            public void SetParams(int iteration, float sigma, float mipMap , bool useStencilNotEqual,bool useStencilNotEqualComposite, int stencilVal)
-                => _inner.SetParams(iteration, sigma, mipMap, useStencilNotEqual, useStencilNotEqualComposite, stencilVal);
+            public void SetParams(int iteration, float sigma, float mipMap, Color alphaBlendColor,
+                bool useStencilNotEqual,bool useStencilNotEqualComposite, int stencilVal)
+                => _inner.SetParams(iteration, sigma, mipMap, alphaBlendColor, useStencilNotEqual, useStencilNotEqualComposite, stencilVal);
             public override void Execute(ScriptableRenderContext ctx, ref RenderingData data) => _inner.Execute(ctx, ref data);
         }
         public static GaussianWrapperPass GetOrCreateGaussian(int i, string tag, RenderPassEvent evt)

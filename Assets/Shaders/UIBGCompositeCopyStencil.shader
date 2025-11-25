@@ -19,6 +19,7 @@
 
             TEXTURE2D(_SourceTex);
             SAMPLER(sampler_SourceTex);
+            float4 _AlphaBlendCol;
 
             struct V { float4 p:SV_POSITION; float2 uv:TEXCOORD0; };
             V vert(uint vid:SV_VertexID){ V o; o.p=GetFullScreenTriangleVertexPosition(vid); o.uv=GetFullScreenTriangleTexCoord(vid); return o; }
@@ -26,7 +27,8 @@
 
             half4 frag(V i):SV_Target
             {
-                return SAMPLE_TEXTURE2D(_SourceTex,sampler_SourceTex,i.uv);
+                float4 col = SAMPLE_TEXTURE2D(_SourceTex,sampler_SourceTex,i.uv);
+                return float4(_AlphaBlendCol.rgb * _AlphaBlendCol.a + col.rgb * (1 - _AlphaBlendCol.a),1);
             }
             ENDHLSL
         }
@@ -48,14 +50,15 @@
 
             TEXTURE2D(_SourceTex);
             SAMPLER(sampler_SourceTex);
+            float4 _AlphaBlendCol;
 
             struct V { float4 p:SV_POSITION; float2 uv:TEXCOORD0; };
             V vert(uint vid:SV_VertexID){ V o; o.p=GetFullScreenTriangleVertexPosition(vid); o.uv=GetFullScreenTriangleTexCoord(vid); return o; }
 
-
             half4 frag(V i):SV_Target
             {
-                return SAMPLE_TEXTURE2D(_SourceTex,sampler_SourceTex,i.uv);
+                float4 col = SAMPLE_TEXTURE2D(_SourceTex,sampler_SourceTex,i.uv);
+                return float4(_AlphaBlendCol.rgb * _AlphaBlendCol.a + col.rgb * (1 - _AlphaBlendCol.a),1);
             }
             ENDHLSL
         }

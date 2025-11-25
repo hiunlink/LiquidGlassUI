@@ -56,6 +56,8 @@ namespace URP
             // 本层模糊
             [ShowIf("blur")]
             public BlurAlgorithm blurAlgorithm = BlurAlgorithm.MipChain;
+            [ShowIf("blur","blurAlgorithm", (int)BlurAlgorithm.GaussianSeparable)]
+            public Color alphaBlendColor = Color.white;
             [ShowIf("blur","blurAlgorithm", (int)BlurAlgorithm.MipChain)]
             [Range(0, 8)] public float blurMip = 3;
             [ShowIf("blur","blurAlgorithm", (int)BlurAlgorithm.GaussianSeparable)]
@@ -339,7 +341,7 @@ namespace URP
                 }
                 evt++;
 
-                int  stencilVal = 1;
+                var stencilVal = 1;
                 // 模糊算法
                 if (config.blur)
                 {
@@ -371,7 +373,7 @@ namespace URP
                             p.Setup(_blurRT, tmpRT, dstRT, _baseCol, _baseDS);
                             p.SetSharedMaterials(_matGauss, _matCopy);
                             p.SetParams(config.iteration, config.gaussianSigma, 
-                                Mathf.Min(config.gaussianSigma, 4f), 
+                                Mathf.Min(config.gaussianSigma, 4f), config.alphaBlendColor,
                                 useStencilClip, useStencilClipComposite, stencilVal);
                             _tempPasses.Add(p);
                             evt++;
@@ -399,7 +401,8 @@ namespace URP
                     globalBlur.Setup(_baseCol, tmpRT, dstRT, _blurRT, null);
                     globalBlur.SetSharedMaterials(_matGauss, _matCopy);
                     globalBlur.SetParams(config.globalIteration, config.globalGaussianSigma, 
-                        Mathf.Min(config.globalGaussianSigma, 4f), false, false, 0);
+                        Mathf.Min(config.globalGaussianSigma, 4f), Color.clear,  
+                        false, false, 0);
                     _tempPasses.Add(globalBlur);
                     evt++;
                 

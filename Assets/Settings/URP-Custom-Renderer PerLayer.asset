@@ -93,6 +93,7 @@ MonoBehaviour:
       isForeground: 0
       blur: 1
       blurAlgorithm: 1
+      alphaBlendColor: {r: 0, g: 0, b: 0, a: 0}
       blurMip: 4.03
       gaussianSigma: 2.89
       iteration: 1
@@ -107,6 +108,7 @@ MonoBehaviour:
       isForeground: 1
       blur: 0
       blurAlgorithm: 1
+      alphaBlendColor: {r: 1, g: 1, b: 1, a: 1}
       blurMip: 2.84
       gaussianSigma: 0
       iteration: 1
@@ -119,11 +121,12 @@ MonoBehaviour:
         serializedVersion: 2
         m_Bits: 256
       isForeground: 0
-      blur: 0
+      blur: 1
       blurAlgorithm: 1
+      alphaBlendColor: {r: 0, g: 0, b: 0, a: 0.90588236}
       blurMip: 4.25
-      gaussianSigma: 3.54
-      iteration: 1
+      gaussianSigma: 5.19
+      iteration: 2
       globalTextureName: _UI_BG
       resolutionScale: 1
       globalBlurAlgorithm: -1
@@ -135,12 +138,13 @@ MonoBehaviour:
       isForeground: 1
       blur: 0
       blurAlgorithm: 1
+      alphaBlendColor: {r: 1, g: 1, b: 1, a: 1}
       blurMip: 4.25
       gaussianSigma: 2.98
       iteration: 1
       globalTextureName: _UI_BG_0
       resolutionScale: 1
-      globalBlurAlgorithm: 1
+      globalBlurAlgorithm: -1
       globalGaussianSigma: 2.8
       globalIteration: 1
     - layer:
@@ -149,6 +153,7 @@ MonoBehaviour:
       isForeground: 0
       blur: 0
       blurAlgorithm: 1
+      alphaBlendColor: {r: 1, g: 1, b: 1, a: 1}
       blurMip: 4.25
       gaussianSigma: 1.77
       iteration: 1
