@@ -9,7 +9,8 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.Experimental.Rendering;
-using URP.Passes;
+using TagUtils = URP.UICaptureComposePerLayerTagUtils;
+using PassPool = URP.UICaptureComposePerLayerPassPool;
 
 namespace URP
 {
@@ -30,8 +31,14 @@ namespace URP
 
     public class UICaptureComposePerLayerFeature : ScriptableRendererFeature
     {
+        // ========== 静态tags ==========
         private const string ClearRtTag = "ClearRT";
         private const string BlitRtTag = "BlitRT";
+        private const string PGlobalmipsBasertTag = "P.GlobalMips(baseRT)";
+        private const string PGlobalblurBlurrtTag = "P.GlobalBlur(blurRT)";
+        private const string MGlobalmipsBlurrtTag = "M.GlobalMips(BlurRT)";
+        private const string LightModeTag = "StencilPrepass";
+        private const string AlphaOnlyTag = "AlphaOnly";
 
         // ========== 可配置结构 ==========
         [System.Serializable]
@@ -103,32 +110,20 @@ namespace URP
             public RenderPassEvent injectEvent = RenderPassEvent.BeforeRenderingTransparents;
         }
 
+        private Dictionary<string, GlobalTextureInfo> _globalTextureInfos = new();
         private class GlobalTextureInfo
         {
             public string globalTextureName = "_UI_BG";
             public float resolutionScale = 1f;
         }
 
-        // ========== 通用小工具 Pass ==========
-        // 通用 GenerateMips（可反复复用）
-        class GenMipsPass : ScriptableRenderPass
+        private GlobalTextureInfo GetOrCreateGlobalTextureInfo(string globalTextureName, float resolutionScale)
         {
-            RTHandle _target; bool _doGen; readonly string _tag;
-            private ProfilingSampler _profilingSampler;
-
-            public GenMipsPass(string tag, RenderPassEvent evt)
-            {
-                this._tag=tag; renderPassEvent=evt;
-                _profilingSampler = new ProfilingSampler(_tag);
-            }
-            public void Setup(RTHandle rt, bool gen){ _target=rt; _doGen=gen; }
-            public override void Execute(ScriptableRenderContext ctx, ref RenderingData data)
-            {
-                if (!_doGen || _target==null) return;
-                var cmd = CommandBufferPool.Get(_tag);
-                using (new ProfilingScope(cmd, _profilingSampler)) cmd.GenerateMips(_target);
-                ctx.ExecuteCommandBuffer(cmd); CommandBufferPool.Release(cmd);
-            }
+            if (!_globalTextureInfos.ContainsKey(globalTextureName))
+                _globalTextureInfos[globalTextureName] = new GlobalTextureInfo();
+            var result = _globalTextureInfos[globalTextureName];
+            result.resolutionScale = resolutionScale;
+            return result;
         }
 
         // ========== Feature 本体 ==========
@@ -143,20 +138,6 @@ namespace URP
         Material _matMip;    // Hidden/UIBGCompositeStencilMip
         Material _matGauss;  // Hidden/UIBG_GaussianSeparable
         Material _matCopy;   // Hidden/UIBGCompositeCopyStencil
-        
-        // --- Pass 池（长生命周期；按层索引复用） ---
-        readonly List<DrawWithLightModePass> _poolDrawLM = new();
-        readonly List<DrawWithLightModePass> _poolDrawAlpha = new();
-        readonly List<DrawDefaultPass>       _poolDrawDef = new();
-        readonly List<MipChainBlurPass>      _poolMipBlur = new();
-        readonly List<GenMipsPass>           _poolGenMips = new();
-        readonly List<GenMipsPass>           _poolGenMips2 = new();
-        readonly List<GaussianWrapperPass>   _poolGaussian = new();
-        readonly List<GaussianWrapperPass>   _poolGaussian2 = new();
-        readonly List<OneShot>               _poolOneShot = new();
-        readonly List<OneShot>               _poolOneShot2 = new();
-        readonly List<OneShot>               _poolOneShot3 = new();
-        readonly List<CompositePass>         _poolComposite = new();
         
         // 临时排队列表（仅存引用，不 new 实例）
         readonly List<ScriptableRenderPass> _tempPasses = new();
@@ -196,29 +177,9 @@ namespace URP
             if (settings.layers == null || settings.layers.Length == 0) return;
             var layers = settings.layers;
             var evt = settings.injectEvent;
-    // #if UNITY_EDITOR
-    //         // 在编辑器但未运行时强制每帧重绘
-    //         if (!Application.isPlaying)
-    //         {
-    //             _dirty = true;
-    //         }
-    // #endif
-    //         // --- 如果界面没变化并已有缓存，直接复用 ---
-    //         if (!_dirty && _baseCol != null)
-    //         {
-    //             Shader.SetGlobalTexture(_gid, _baseCol);
-    //             Shader.SetGlobalVector(_uvScaleId, new Vector4(
-    //                 (float)_baseCol.rt.width / data.cameraData.cameraTargetDescriptor.width,
-    //                 (float)_baseCol.rt.height / data.cameraData.cameraTargetDescriptor.height,
-    //                 0, 0));
-    //             return;
-    //         }
-    //         
-    //         // --- 继续执行完整渲染 ---
-    //         _dirty = false; // 渲染后标记为“干净”
             
             // =========== 缓存系统 ============
-            // 在编辑器但未运行时强制每帧重绘
+            // === 在编辑器但未运行时强制每帧重绘 ==
             if (!Application.isPlaying)
             {
                 for (var i = 0; i < layers.Length; i++)
@@ -257,18 +218,18 @@ namespace URP
             
             _tempPasses.Clear();
             var prevLayerToRender = Mathf.Max(firstLayerToRender - 1, 0);
-            
-            var firstGlobalTextureInfo = new GlobalTextureInfo();
+
+            GlobalTextureInfo firstGlobalTextureInfo;
             if (settings.layers.Length > prevLayerToRender)
             {
                 var firstLayer = settings.layers[prevLayerToRender];
-                firstGlobalTextureInfo.globalTextureName = firstLayer.globalTextureName;
-                firstGlobalTextureInfo.resolutionScale = firstLayer.resolutionScale;
+                firstGlobalTextureInfo = GetOrCreateGlobalTextureInfo(firstLayer.globalTextureName,
+                    firstLayer.resolutionScale);
             }
             else
             {
-                firstGlobalTextureInfo.globalTextureName = settings.globalTextureName;
-                firstGlobalTextureInfo.resolutionScale = settings.resolutionScale;
+                firstGlobalTextureInfo = GetOrCreateGlobalTextureInfo(settings.globalTextureName,
+                    settings.resolutionScale);
             }
 
             var useHDR = settings.useHDR;
@@ -283,23 +244,22 @@ namespace URP
                 var hasPrevLayer = prevLayer >= 0;
                 var prevLayerConfig = hasPrevLayer? layers[prevLayer]: null;
                 var rtSwitch = prevLayerConfig!=null && config.globalTextureName != prevLayerConfig.globalTextureName;
-                // 做 stencilPrepass
+                // 做 StencilPrepass
                 if (rtSwitch || j == 0)
                 {
                     curRtFrom = j;
                     curRtTo = j;
-                    EnsureGlobalTextures(camDesc, new GlobalTextureInfo()
-                    {
-                        globalTextureName = config.globalTextureName,
-                        resolutionScale = config.resolutionScale
-                    },useHDR,out var w2, out var h2);
+                    EnsureGlobalTextures(camDesc, GetOrCreateGlobalTextureInfo(
+                        config.globalTextureName,
+                        config.resolutionScale),
+                        useHDR,out var w2, out var h2);
                     for (var i = j + 1; i < layers.Length; i++)
                     {
                         var nextConfig = layers[i];
                         if (nextConfig.globalTextureName == config.globalTextureName)
                             curRtTo = i;
                     }
-                    _tempPasses.Add(GetOrCreateOneShot(j, CmdClearRT(_baseCol,_baseDS), evt));
+                    _tempPasses.Add(PassPool.GetOrCreateOneShot(j, CmdClearRT(_baseCol,_baseDS), evt));
                     evt++;
                     // ---------- Phase S：前景模板预写（并按规则决定是否同时画Opaque） ----------
                     for (var i = curRtFrom; i <= curRtTo; i++)
@@ -309,11 +269,11 @@ namespace URP
 
                         fgLayer = i;
                         var canOpaqueOptimize = ShouldDoOpaquePrepass(i, layers, settings.multiLayerMix, curRtFrom, curRtTo); // 由“之前是否存在模糊层”决定
-                        var p = GetOrCreateDrawWithLightMode(i,
-                            tag: $"S.FG_StencilPrepass[{i}] (drawOpaque={canOpaqueOptimize})",
+                        var p = PassPool.GetOrCreateDrawWithLightMode(i,
+                            tag: TagUtils.GetStencilPrepassTag(i, canOpaqueOptimize),
                             evt: evt
                         );
-                        p.Setup(lightMode: "StencilPrepass",
+                        p.Setup(lightMode: LightModeTag,
                             layer: layerConfig.layer,
                             enableKeywordDrawColor: canOpaqueOptimize); // true=写颜色；false=仅写模板
                         p.SetupTargets(_baseCol, _baseDS);
@@ -323,20 +283,18 @@ namespace URP
                 // 下层合成到本层 or 没变化的层选最上层的合成到本层
                 if (hasPrevLayer && rtSwitch)
                 {
-                    EnsureGlobalTextures(camDesc, new GlobalTextureInfo()
-                    {
-                        globalTextureName = prevLayerConfig.globalTextureName,
-                        resolutionScale = prevLayerConfig.resolutionScale
-                    },useHDR,out var w0, out var h0);
+                    EnsureGlobalTextures(camDesc, GetOrCreateGlobalTextureInfo(
+                        prevLayerConfig.globalTextureName,
+                        prevLayerConfig.resolutionScale),
+                        useHDR,out var w0, out var h0);
                     var fromCol = _baseCol;
-                    EnsureGlobalTextures(camDesc, new GlobalTextureInfo()
-                    {
-                        globalTextureName = config.globalTextureName,
-                        resolutionScale = config.resolutionScale
-                    },useHDR,out var w2, out var h2);
+                    EnsureGlobalTextures(camDesc, GetOrCreateGlobalTextureInfo(
+                            config.globalTextureName,
+                            config.resolutionScale),
+                        useHDR,out var w2, out var h2);
                     
-                    var compositePass = GetOrCreateComposite(j,
-                        $"Composite {prevLayerConfig.globalTextureName} -> {config.globalTextureName}",evt);
+                    var compositePass = PassPool.GetOrCreateComposite(j,
+                        TagUtils.GetCompositeTag(prevLayerConfig.globalTextureName, config.globalTextureName),evt);
                     var compositeStencilOpt = fgLayer >= j && settings.multiLayerMix;
                     compositePass.Setup(fromCol, _baseCol, _baseDS, compositeStencilOpt, 1);
                     compositePass.SetMaterial(_matCopy);
@@ -345,11 +303,8 @@ namespace URP
                 }
                 else
                 {
-                    var layerGlobalTextureInfo = new GlobalTextureInfo
-                    {
-                        globalTextureName = config.globalTextureName,
-                        resolutionScale = config.resolutionScale
-                    };
+                    var layerGlobalTextureInfo =
+                        GetOrCreateGlobalTextureInfo(config.globalTextureName, config.resolutionScale);
                     EnsureGlobalTextures(camDesc, layerGlobalTextureInfo, useHDR, out var w1, out var h1);
                 }
                 
@@ -359,7 +314,7 @@ namespace URP
                 // 模糊层是否叠加
                 if (config.blur && !settings.multiLayerMix)
                 {
-                    var clear = GetOrCreateOneShot2(j, CmdClearRT(_blurRT), evt);
+                    var clear = PassPool.GetOrCreateOneShot2(j, CmdClearRT(_blurRT), evt);
                     _tempPasses.Add(clear);
                     evt++;
                 }
@@ -370,7 +325,7 @@ namespace URP
                 // 在模糊层叠加渲染时需要先blit
                 if (config.blur && settings.multiLayerMix)
                 {
-                    _tempPasses.Add(GetOrCreateOneShot3(j, CmdBlitRT(_baseCol, _blurRT), evt));
+                    _tempPasses.Add(PassPool.GetOrCreateOneShot3(j, CmdBlitRT(_baseCol, _blurRT), evt));
                     evt++;
                 }
                 if (config.isForeground)
@@ -382,8 +337,8 @@ namespace URP
                 {
                     // 非模糊层 → 直接画到 baseRT（NotEqual 1）
                     // 模糊层 → 直接画到 baseRT （Full）
-                    var p5 = GetOrCreateDrawDefault(j,
-                        $"B.NonBlur[{j}]→base(NotEqual1={useStencilClip})", evt);
+                    var p5 = PassPool.GetOrCreateDrawDefault(j,
+                        TagUtils.GetDrawDefaultTag(j,useStencilClip), evt);
                     p5.Setup(config.layer, useStencilClip);
                     p5.SetupTargets(fgColRT, fgDepthRT);
                     _tempPasses.Add(p5);
@@ -399,7 +354,7 @@ namespace URP
                         case BlurAlgorithm.MipChain:
                         {
                             // 使用 MIP 链
-                            var p = GetOrCreateMipChainBlur(j, tag: $"B[{j}].MipChain",  evt);
+                            var p = PassPool.GetOrCreateMipChainBlur(j, tag: TagUtils.GetMipsTag(j),  evt);
                             p.SetSharedMaterial(_matMip);
                             p.Setup(srcRT: _blurRT,
                                 baseCol: _baseCol,
@@ -418,7 +373,7 @@ namespace URP
                             // 使用高斯分离（需要一个 ping-pong 中间RT）
                             EnsureGaussianPingPongRT(out var tmpRT, out var dstRT);
                             // —— 建议修改 UIEffects.Passes.GaussianBlurPass 为支持共享材质注入
-                            var p = GetOrCreateGaussian(j, $"B[{j}].Gaussian", evt);
+                            var p = PassPool.GetOrCreateGaussian(j, TagUtils.GetGaussianTag(j), evt);
                             p.Setup(_blurRT, tmpRT, dstRT, _baseCol, _baseDS);
                             p.SetSharedMaterials(_matGauss, _matCopy);
                             p.SetParams(config.iteration, config.gaussianSigma, 
@@ -437,7 +392,7 @@ namespace URP
                 // ---------- Phase M：最终 baseRT 也要有 MIP ----------
                 if (generateMips)
                 {
-                    var pm = GetOrCreateGenMip(j,"P.GlobalMips(baseRT)", evt);
+                    var pm = PassPool.GetOrCreateGenMip(j,PGlobalmipsBasertTag, evt);
                     pm.Setup(_baseCol, generateMips);
                     _tempPasses.Add(pm);
                     evt++;
@@ -446,7 +401,7 @@ namespace URP
                 if (generateGaussian)
                 {
                     EnsureGaussianPingPongRT(out var tmpRT, out var dstRT);
-                    var globalBlur = GetOrCreateGaussian2(j, "P.GlobalBlur(blurRT)", evt);
+                    var globalBlur = PassPool.GetOrCreateGaussian2(j, PGlobalblurBlurrtTag, evt);
                     globalBlur.Setup(_baseCol, tmpRT, dstRT, _blurRT, null);
                     globalBlur.SetSharedMaterials(_matGauss, _matCopy);
                     globalBlur.SetParams(config.globalIteration, config.globalGaussianSigma, 
@@ -454,7 +409,7 @@ namespace URP
                     _tempPasses.Add(globalBlur);
                     evt++;
                 
-                    var pm = GetOrCreateGenMip2(j,"M.GlobalMips(BlurRT)", evt);
+                    var pm = PassPool.GetOrCreateGenMip2(j,MGlobalmipsBlurrtTag, evt);
                     pm.Setup(_blurRT, generateMips);
                     _tempPasses.Add(pm);
                     evt++;
@@ -539,8 +494,8 @@ namespace URP
 
                 
                 _baseCol = RTHandles.Alloc(col, FilterMode.Bilinear, name: layerGlobalTextureInfo.globalTextureName, wrapMode: TextureWrapMode.Clamp);
-                _baseDS  = RTHandles.Alloc(ds,  name: GetDsString(layerGlobalTextureInfo.globalTextureName), wrapMode: TextureWrapMode.Clamp);
-                _blurRT  = RTHandles.Alloc(blur,FilterMode.Bilinear, name: GetBlurString(layerGlobalTextureInfo.globalTextureName), wrapMode: TextureWrapMode.Clamp);
+                _baseDS  = RTHandles.Alloc(ds,  name: TagUtils.GetDsString(layerGlobalTextureInfo.globalTextureName), wrapMode: TextureWrapMode.Clamp);
+                _blurRT  = RTHandles.Alloc(blur,FilterMode.Bilinear, name: TagUtils.GetBlurString(layerGlobalTextureInfo.globalTextureName), wrapMode: TextureWrapMode.Clamp);
                 _tempRTMap[layerGlobalTextureInfo.globalTextureName] = new GlobalTextures()
                 {
                     BaseCol = _baseCol,
@@ -555,25 +510,10 @@ namespace URP
             _blurRT = rtInfo.BlurRT;
             
             _gid = Shader.PropertyToID(layerGlobalTextureInfo.globalTextureName);
-            _blurGid = Shader.PropertyToID(GetBlurString(layerGlobalTextureInfo.globalTextureName));
+            _blurGid = Shader.PropertyToID(TagUtils.GetBlurString(layerGlobalTextureInfo.globalTextureName));
         }
         
         // ========== 小工具 ==========
-        private Dictionary<string, string> _dsStringMap = new (); 
-        private Dictionary<string, string> _blurStringMap = new (); 
-        string GetDsString(string textureName)
-        {
-            if (!_dsStringMap.ContainsKey(textureName))
-                _dsStringMap[textureName] = textureName + "_DS";    
-            return _dsStringMap[textureName];
-            
-        }
-        string GetBlurString(string textureName)
-        {
-            if (!_blurStringMap.ContainsKey(textureName))
-                _blurStringMap[textureName] = textureName + "_BLUR";    
-            return _blurStringMap[textureName];
-        }
         static CommandBuffer CmdClearRT(RTHandle rt, RTHandle ds = null)
         {
             var cmd = CommandBufferPool.Get(ClearRtTag);
@@ -680,11 +620,11 @@ namespace URP
             if (canOpaqueOptimize)
             {
                 // 该前景层已在 Phase S 画过 Opaque，这里只补 AlphaOnly（不加 NotEqual）
-                var pf = GetOrCreateDrawAlphaOnly(layer,
-                    tag: $"F.FG_AlphaOnly[{layer}]",
+                var pf = PassPool.GetOrCreateDrawAlphaOnly(layer,
+                    tag: TagUtils.GetAlphaOnlyTag(layer),
                     evt: evt
                 );
-                pf.Setup(lightMode: "AlphaOnly",
+                pf.Setup(lightMode: AlphaOnlyTag,
                     layer: config.layer,
                     enableKeywordDrawColor: false);
                 pf.SetupTargets(src, depth);
@@ -695,8 +635,8 @@ namespace URP
                 var useStencilClip = UseStencilClip(layer, layers,
                     multilayerMix, false, from, to);
                 // 该前景层之前有模糊层 → 不能提前画 Opaque，这里做完整正常渲染（默认Tag，不加 NotEqual）
-                var pf = GetOrCreateDrawDefault(layer,
-                    $"F.FG_Full[{layer}]", evt);
+                var pf = PassPool.GetOrCreateDrawDefault(layer,
+                    TagUtils.GetFullTag(layer), evt);
                 pf.Setup(config.layer, useStencilClip);
                 pf.SetupTargets(src, depth);
                 renderPass = pf;
@@ -724,147 +664,6 @@ namespace URP
             }
             tmpRT = _gaussTmp;
             dstRT = _gaussDst;
-        }
-       
-        // --------- Pass 池：获取或创建 ---------
-        DrawWithLightModePass GetOrCreateDrawWithLightMode(int i, string tag, RenderPassEvent evt)
-        {
-            while (_poolDrawLM.Count <= i) _poolDrawLM.Add(null);
-            var p = _poolDrawLM[i];
-            if (p == null) { p = new DrawWithLightModePass(tag, evt); _poolDrawLM[i] = p; }
-            else { p.renderPassEvent = evt; }
-            return p;
-        }
-        DrawWithLightModePass GetOrCreateDrawAlphaOnly(int i, string tag, RenderPassEvent evt)
-        {
-            while (_poolDrawAlpha.Count <= i) _poolDrawAlpha.Add(null);
-            var p = _poolDrawAlpha[i];
-            if (p == null) { p = new DrawWithLightModePass(tag, evt); _poolDrawAlpha[i] = p; }
-            else { p.renderPassEvent = evt; }
-            return p;
-        }
-        DrawDefaultPass GetOrCreateDrawDefault(int i, string tag, RenderPassEvent evt)
-        {
-            while (_poolDrawDef.Count <= i) _poolDrawDef.Add(null);
-            var p = _poolDrawDef[i];
-            if (p == null) { p = new DrawDefaultPass(tag, evt); _poolDrawDef[i] = p; }
-            else { p.renderPassEvent = evt; }
-            return p;
-        }
-
-        MipChainBlurPass GetOrCreateMipChainBlur(int i, string tag, RenderPassEvent evt)
-        {
-            while (_poolMipBlur.Count <= i) _poolMipBlur.Add(null);
-            var p = _poolMipBlur[i];
-            if (p == null) { p = new MipChainBlurPass(tag, evt); _poolMipBlur[i] = p; }
-            else { p.renderPassEvent = evt; }
-            return p;
-        }
-
-        GenMipsPass GetOrCreateGenMip(int i, string tag, RenderPassEvent evt)
-        {
-            while (_poolGenMips.Count <= i) _poolGenMips.Add(null);
-            var p = _poolGenMips[i];
-            if (p == null) { p = new GenMipsPass(tag, evt); _poolGenMips[i] = p; }
-            else { p.renderPassEvent = evt; }
-            return p;
-        }
-        GenMipsPass GetOrCreateGenMip2(int i, string tag, RenderPassEvent evt)
-        {
-            while (_poolGenMips2.Count <= i) _poolGenMips2.Add(null);
-            var p = _poolGenMips2[i];
-            if (p == null) { p = new GenMipsPass(tag, evt); _poolGenMips2[i] = p; }
-            else { p.renderPassEvent = evt; }
-            return p;
-        }
-        CompositePass GetOrCreateComposite(int i, string tag, RenderPassEvent evt)
-        {
-            while (_poolComposite.Count <= i) _poolComposite.Add(null);
-            var p = _poolComposite[i];
-            if (p == null) { p = new CompositePass(tag, evt); _poolComposite[i] = p; }
-            else { p.renderPassEvent = evt; }
-            return p;
-        }
-
-        // 如果你能修改 GaussianBlurPass：建议提供如下包装接口
-        class GaussianWrapperPass : ScriptableRenderPass
-        {
-            GaussianBlurPass _inner;
-            public GaussianWrapperPass(GaussianBlurPass inner){ _inner = inner; }
-            public void Setup(RTHandle src, RTHandle tmp, RTHandle dst, RTHandle baseCol, RTHandle baseDS)
-                => _inner.Setup(src,tmp,dst,baseCol,baseDS);
-            public void SetSharedMaterials(Material gauss, Material copy)
-                => _inner.SetSharedMaterials(gauss, copy); // 需要在你的类里添加
-            public void SetParams(int iteration, float sigma, float mipMap , bool useStencilNotEqual,bool useStencilNotEqualComposite, int stencilVal)
-                => _inner.SetParams(iteration, sigma, mipMap, useStencilNotEqual, useStencilNotEqualComposite, stencilVal);
-            public override void Execute(ScriptableRenderContext ctx, ref RenderingData data) => _inner.Execute(ctx, ref data);
-        }
-        GaussianWrapperPass GetOrCreateGaussian(int i, string tag, RenderPassEvent evt)
-        {
-            // 简化：每层一个 wrapper（内部持有同一个 GaussianBlurPass）
-            while (_poolGaussian.Count <= i) _poolGaussian.Add(null);
-            var p = _poolGaussian[i];
-            if (p == null)
-            {
-                var inner = new GaussianBlurPass(tag, evt); 
-                p = new GaussianWrapperPass(inner) { renderPassEvent = evt };
-                _poolGaussian[i] = p;
-            }
-            else { p.renderPassEvent = evt; }
-            return p;
-        }
-        GaussianWrapperPass GetOrCreateGaussian2(int i, string tag, RenderPassEvent evt)
-        {
-            // 简化：每层一个 wrapper（内部持有同一个 GaussianBlurPass）
-            while (_poolGaussian2.Count <= i) _poolGaussian2.Add(null);
-            var p = _poolGaussian2[i];
-            if (p == null)
-            {
-                var inner = new GaussianBlurPass(tag, evt); 
-                p = new GaussianWrapperPass(inner) { renderPassEvent = evt };
-                _poolGaussian2[i] = p;
-            }
-            else { p.renderPassEvent = evt; }
-            return p;
-        }
-
-        OneShot GetOrCreateOneShot(int i, CommandBuffer cmd, RenderPassEvent evt)
-        {
-            //return new OneShot(cmd, evt);
-            while (_poolOneShot.Count <= i) _poolOneShot.Add(null);
-            var p = _poolOneShot[i];
-            if (p == null) { p = new OneShot(cmd, evt); _poolOneShot[i] = p; }
-            else { p.renderPassEvent = evt; p.Setup(cmd); }
-            return p;
-        }
-        OneShot GetOrCreateOneShot2(int i, CommandBuffer cmd, RenderPassEvent evt)
-        {
-            while (_poolOneShot2.Count <= i) _poolOneShot2.Add(null);
-            var p = _poolOneShot2[i];
-            if (p == null) { p = new OneShot(cmd, evt); _poolOneShot2[i] = p; }
-            else { p.renderPassEvent = evt; p.Setup(cmd); }
-            return p;
-        }
-        OneShot GetOrCreateOneShot3(int i, CommandBuffer cmd, RenderPassEvent evt)
-        {
-            while (_poolOneShot3.Count <= i) _poolOneShot3.Add(null);
-            var p = _poolOneShot3[i];
-            if (p == null) { p = new OneShot(cmd, evt); _poolOneShot3[i] = p; }
-            else { p.renderPassEvent = evt; p.Setup(cmd); }
-            return p;
-        }
-        
-        class OneShot : ScriptableRenderPass
-        {
-            CommandBuffer _cmd;
-            public OneShot(CommandBuffer cmd, RenderPassEvent evt) { _cmd = cmd; renderPassEvent = evt; }
-
-            public void Setup(CommandBuffer cmd)
-            {
-                _cmd = cmd;
-            }
-            public override void Execute(ScriptableRenderContext ctx, ref RenderingData data)
-            { ctx.ExecuteCommandBuffer(_cmd); CommandBufferPool.Release(_cmd); }
         }
     }
 }
