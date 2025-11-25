@@ -120,7 +120,13 @@ namespace URP
         private GlobalTextureInfo GetOrCreateGlobalTextureInfo(string globalTextureName, float resolutionScale)
         {
             if (!_globalTextureInfos.ContainsKey(globalTextureName))
-                _globalTextureInfos[globalTextureName] = new GlobalTextureInfo();
+            {
+                _globalTextureInfos[globalTextureName] = new GlobalTextureInfo
+                {
+                    globalTextureName = globalTextureName
+                };
+            }
+
             var result = _globalTextureInfos[globalTextureName];
             result.resolutionScale = resolutionScale;
             return result;
