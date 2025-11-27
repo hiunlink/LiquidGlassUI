@@ -10,8 +10,8 @@ namespace UICaptureCompose.URP.Editor
     {
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            ShowIfAttribute attr = (ShowIfAttribute)attribute;
-            bool show = ShouldShow(attr, property);
+            var attr = (ShowIfAttribute)attribute;
+            var show = ShouldShow(attr, property);
 
             if (!attr.HideInInspector || show)
             {
@@ -21,8 +21,8 @@ namespace UICaptureCompose.URP.Editor
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            ShowIfAttribute attr = (ShowIfAttribute)attribute;
-            bool show = ShouldShow(attr, property);
+            var attr = (ShowIfAttribute)attribute;
+            var show = ShouldShow(attr, property);
 
             if (!attr.HideInInspector || show)
             {
@@ -33,14 +33,14 @@ namespace UICaptureCompose.URP.Editor
 
         private bool ShouldShow(ShowIfAttribute attr, SerializedProperty property)
         {
-            string path = property.propertyPath;
-            bool result = true;
+            var path = property.propertyPath;
+            var result = true;
 
             // 检查 bool 条件
             if (!string.IsNullOrEmpty(attr.BoolField))
             {
-                string boolPath = path.Replace(property.name, attr.BoolField);
-                SerializedProperty boolProp = property.serializedObject.FindProperty(boolPath);
+                var boolPath = path.Replace(property.name, attr.BoolField);
+                var boolProp = property.serializedObject.FindProperty(boolPath);
                 if (boolProp != null && boolProp.propertyType == SerializedPropertyType.Boolean)
                 {
                     result &= boolProp.boolValue;
@@ -50,11 +50,18 @@ namespace UICaptureCompose.URP.Editor
             // 检查 enum 条件
             if (!string.IsNullOrEmpty(attr.EnumField))
             {
-                string enumPath = path.Replace(property.name, attr.EnumField);
-                SerializedProperty enumProp = property.serializedObject.FindProperty(enumPath);
-                if (enumProp != null && enumProp.propertyType == SerializedPropertyType.Enum)
+                var enumPath = path.Replace(property.name, attr.EnumField);
+                var enumProp = property.serializedObject.FindProperty(enumPath);
+                if (enumProp != null)
                 {
-                    result &= (enumProp.enumValueIndex == attr.EnumValue);
+                    // enum
+                    if (enumProp.propertyType == SerializedPropertyType.Enum)
+                        result &= (enumProp.enumValueIndex == attr.EnumValue);
+                    // integer
+                    else if (enumProp.propertyType == SerializedPropertyType.Integer)
+                    {
+                        result &= (enumProp.intValue == attr.EnumValue);                        
+                    }
                 }
             }
 

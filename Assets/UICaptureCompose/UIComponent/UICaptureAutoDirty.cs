@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using UICaptureCompose.URP;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,7 +8,6 @@ namespace UICaptureCompose.UIComponent
     [RequireComponent(typeof(Canvas))]
     public class UICaptureAutoDirty : MonoBehaviour
     {
-        public UICaptureComposePerLayerFeature feature;
         public float checkInterval = 0.2f; // 检查间隔，防抖
         private float _timer;
         private int _lastHash;
@@ -37,7 +35,7 @@ namespace UICaptureCompose.UIComponent
             if (hash != _lastHash)
             {
                 _lastHash = hash;
-                feature?.SetDirty(1 << _canvas.gameObject.layer,true);
+                UICaptureEffectManager.Instance?.SetDirty(1 << _canvas.gameObject.layer,true);
             }
         }
 
@@ -51,7 +49,7 @@ namespace UICaptureCompose.UIComponent
             if (hash != _lastHash)
             {
                 _lastHash = hash;
-                feature?.SetDirty(1 << _canvas.gameObject.layer,true);
+                UICaptureEffectManager.Instance?.SetDirty(1 << _canvas.gameObject.layer,true);
             }
         }
 

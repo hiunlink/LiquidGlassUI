@@ -48,7 +48,7 @@ MonoBehaviour:
     m_Bits: 4294967295
   m_TransparentLayerMask:
     serializedVersion: 2
-    m_Bits: 23
+    m_Bits: 55
   m_DefaultStencilState:
     overrideStencilState: 0
     stencilReference: 0
@@ -93,11 +93,11 @@ MonoBehaviour:
       isForeground: 0
       blur: 1
       blurAlgorithm: 1
-      alphaBlendColor: {r: 0, g: 0, b: 0, a: 0}
-      blurMip: 4.03
-      gaussianSigma: 2.89
+      alphaBlendColor: {r: 0, g: 0, b: 0, a: 0.5019608}
+      blurMip: 0
+      gaussianSigma: 3.65
       iteration: 1
-      globalTextureName: _UI_BG
+      globalTextureName: UI_BG_1
       resolutionScale: 1
       globalBlurAlgorithm: 0
       globalGaussianSigma: 2
@@ -107,12 +107,12 @@ MonoBehaviour:
         m_Bits: 128
       isForeground: 1
       blur: 0
-      blurAlgorithm: 1
-      alphaBlendColor: {r: 1, g: 1, b: 1, a: 1}
-      blurMip: 2.84
+      blurAlgorithm: 0
+      alphaBlendColor: {r: 0, g: 0, b: 0, a: 0}
+      blurMip: 0
       gaussianSigma: 0
-      iteration: 1
-      globalTextureName: _UI_BG
+      iteration: 0
+      globalTextureName: UI_BG_1
       resolutionScale: 1
       globalBlurAlgorithm: 0
       globalGaussianSigma: 2
@@ -121,46 +121,46 @@ MonoBehaviour:
         serializedVersion: 2
         m_Bits: 256
       isForeground: 0
-      blur: 1
-      blurAlgorithm: 1
-      alphaBlendColor: {r: 0, g: 0, b: 0, a: 0.90588236}
-      blurMip: 4.25
-      gaussianSigma: 5.09
-      iteration: 2
-      globalTextureName: _UI_BG
-      resolutionScale: 1
-      globalBlurAlgorithm: -1
-      globalGaussianSigma: 3.29
-      globalIteration: 1
-    - layer:
-        serializedVersion: 2
-        m_Bits: 32
-      isForeground: 1
       blur: 0
-      blurAlgorithm: 1
-      alphaBlendColor: {r: 1, g: 1, b: 1, a: 1}
-      blurMip: 4.25
-      gaussianSigma: 2.98
-      iteration: 1
-      globalTextureName: _UI_BG_0
+      blurAlgorithm: 0
+      alphaBlendColor: {r: 0, g: 0, b: 0, a: 0}
+      blurMip: 0
+      gaussianSigma: 0
+      iteration: 0
+      globalTextureName: UI_BG_1
       resolutionScale: 1
-      globalBlurAlgorithm: -1
-      globalGaussianSigma: 1.56
+      globalBlurAlgorithm: 3
+      globalGaussianSigma: 5
       globalIteration: 1
     - layer:
         serializedVersion: 2
         m_Bits: 512
       isForeground: 1
       blur: 0
-      blurAlgorithm: 1
-      alphaBlendColor: {r: 1, g: 1, b: 1, a: 1}
-      blurMip: 4.25
-      gaussianSigma: 1.77
-      iteration: 1
-      globalTextureName: _UI_BG_1
+      blurAlgorithm: 0
+      alphaBlendColor: {r: 0, g: 0, b: 0, a: 0}
+      blurMip: 0
+      gaussianSigma: 0
+      iteration: 0
+      globalTextureName: UI_BG_2
+      resolutionScale: 1
+      globalBlurAlgorithm: 3
+      globalGaussianSigma: 5
+      globalIteration: 1
+    - layer:
+        serializedVersion: 2
+        m_Bits: 1024
+      isForeground: 1
+      blur: 0
+      blurAlgorithm: 0
+      alphaBlendColor: {r: 0, g: 0, b: 0, a: 0}
+      blurMip: 0
+      gaussianSigma: 0
+      iteration: 0
+      globalTextureName: UI_BG_3
       resolutionScale: 1
       globalBlurAlgorithm: 0
-      globalGaussianSigma: 1.69
+      globalGaussianSigma: 2
       globalIteration: 1
     injectEvent: 300
 --- !u!114 &6576797754651316054
@@ -177,7 +177,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Active: 1
   settings:
-    globalTextureName: _UI_BG_1
+    globalTextureName: UI_BG_3
     injectEvent: 450
     replaceMaterial: {fileID: 2100000, guid: c4ad2cf383ea5e947b82b23c2f7297ea, type: 2}
     cameraTagFilter: 

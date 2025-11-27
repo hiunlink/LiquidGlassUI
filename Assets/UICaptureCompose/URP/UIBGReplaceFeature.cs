@@ -20,7 +20,7 @@ namespace UICaptureCompose.URP
         class ReplacePass : ScriptableRenderPass
         {
             private readonly Settings _s;
-            private readonly int _srcID;
+            private int _srcID;
             private readonly string _tag;
             private readonly ProfilingSampler _profilingSampler;
 
@@ -32,6 +32,12 @@ namespace UICaptureCompose.URP
                 _srcID = Shader.PropertyToID(s.globalTextureName);
                 
                 _profilingSampler = new ProfilingSampler(_tag);
+            }
+
+            public void UpdateSettings()
+            {
+                renderPassEvent = _s.injectEvent - 1;
+                _srcID = Shader.PropertyToID(_s.globalTextureName);
             }
 
             public override void Execute(ScriptableRenderContext ctx, ref RenderingData data)
@@ -64,6 +70,11 @@ namespace UICaptureCompose.URP
         public override void Create()
         {
             _pass = new ReplacePass(settings);
+        }
+
+        public void UpdateSettings()
+        {
+            _pass.UpdateSettings();
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData data)

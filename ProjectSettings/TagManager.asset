@@ -12,11 +12,11 @@ TagManager:
   - Water
   - UI
   - UI_BG
-  - UI_FG
-  - UI_POP
-  - UI_POP2
-  - 
-  - 
+  - UI_BG_0
+  - UI_BG_1
+  - UI_BG_2
+  - UI_BG_3
+  - UI_BG_4
   - 
   - 
   - 

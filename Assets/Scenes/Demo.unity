@@ -134,7 +134,7 @@ GameObject:
   - component: {fileID: 240861573}
   - component: {fileID: 240861575}
   - component: {fileID: 240861574}
-  m_Layer: 9
+  m_Layer: 10
   m_Name: Text (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -268,7 +268,8 @@ Material:
   m_Shader: {fileID: 4800000, guid: 6c289ab28ae893b4dbbf03f860ec36ef, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - WITHOUT_UI_BG
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -321,7 +322,8 @@ Material:
   m_Shader: {fileID: 4800000, guid: 6c289ab28ae893b4dbbf03f860ec36ef, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - WITHOUT_UI_BG
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -353,12 +355,12 @@ Material:
     - _RefrDim: 0.014957265
     - _RefrLODBias: 0.86
     - _RefrMag: 0.042735044
-    - _UIBG_Lod: 4.04
+    - _UIBG_Lod: 4.06
     - _UseBlurBG: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _IOR: {r: 1.51, g: 1.52, b: 1.53, a: 0}
-    - _RimLightColor: {r: 1, g: 1, b: 1, a: 0.25490198}
+    - _RimLightColor: {r: 1, g: 1, b: 1, a: 0.24705882}
     - _RimLightVec: {r: -0.707, g: 0.707, b: 0, a: 0}
     - _TintColor: {r: 0, g: 0, b: 0, a: 0}
     - _UIBG_UVScale: {r: 1, g: 1, b: 0, a: 0}
@@ -394,6 +396,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   captureFeature: {fileID: 1367173693722032479, guid: 264474623b4d69344bc078bd79ea79f7,
     type: 2}
+  replaceFeature: {fileID: 6576797754651316054, guid: 264474623b4d69344bc078bd79ea79f7,
+    type: 2}
 --- !u!4 &460316046
 Transform:
   m_ObjectHideFlags: 0
@@ -422,7 +426,7 @@ GameObject:
   - component: {fileID: 855365808}
   - component: {fileID: 855365807}
   - component: {fileID: 855365810}
-  m_Layer: 5
+  m_Layer: 9
   m_Name: Button (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -442,7 +446,7 @@ RectTransform:
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 1769651053}
-  m_Father: {fileID: 1816375798}
+  m_Father: {fileID: 965123220}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -546,15 +550,15 @@ MonoBehaviour:
   cornerRadiusPx: 90
   borderWidthPx: 4
   blurAlgorithm: 1
-  mipMapLod: 4.04
+  mipMapLod: 4.06
   refractionEdgeWidth: 35
   refractionMagnitude: 100
   chromaticAberration: 33
   refractionLODBias: 0.86
   edgeRimWidth: 2
-  rimLight: {r: 1, g: 1, b: 1, a: 0.25490198}
+  rimLight: {r: 1, g: 1, b: 1, a: 0.24705882}
   glassTint: {r: 0, g: 0, b: 0, a: 0}
-  backgroundRTName: _UI_BG
+  backgroundRTName: 
   autoAssignMaterial: 1
   continuousUpdate: 1
 --- !u!1 &894721299
@@ -570,7 +574,7 @@ GameObject:
   - component: {fileID: 894721303}
   - component: {fileID: 894721302}
   - component: {fileID: 894721301}
-  m_Layer: 5
+  m_Layer: 9
   m_Name: Button (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -590,7 +594,7 @@ RectTransform:
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 936617962}
-  m_Father: {fileID: 1816375798}
+  m_Father: {fileID: 965123220}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -620,7 +624,7 @@ MonoBehaviour:
   edgeRimWidth: 1
   rimLight: {r: 1, g: 1, b: 1, a: 0.20392157}
   glassTint: {r: 0.24528301, g: 0.24528301, b: 0.24528301, a: 0.6313726}
-  backgroundRTName: _UI_BG
+  backgroundRTName: 
   autoAssignMaterial: 1
   continuousUpdate: 1
 --- !u!114 &894721302
@@ -716,7 +720,7 @@ GameObject:
   - component: {fileID: 936617962}
   - component: {fileID: 936617964}
   - component: {fileID: 936617963}
-  m_Layer: 5
+  m_Layer: 9
   m_Name: Text (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -849,7 +853,8 @@ GameObject:
   m_Component:
   - component: {fileID: 965123220}
   - component: {fileID: 965123221}
-  m_Layer: 5
+  - component: {fileID: 965123222}
+  m_Layer: 9
   m_Name: UILayer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -871,8 +876,9 @@ RectTransform:
   - {fileID: 1024658029}
   - {fileID: 1631823087}
   - {fileID: 1148132111}
+  - {fileID: 855365806}
   - {fileID: 1816375798}
-  - {fileID: 1066916483}
+  - {fileID: 894721300}
   m_Father: {fileID: 1938411904}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -898,11 +904,71 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 1
-  m_AdditionalShaderChannelsFlag: 0
+  m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!114 &965123222
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 965123219}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d79fd7b349364961919670c54dada337, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  prevLayer: 0
+  lowerCanvasBlurConfig:
+    blurAlgorithm: 1
+    alphaBlendColor: {r: 0, g: 0, b: 0, a: 0.7647059}
+    blurMip: 3
+    gaussianSigma: 3.43
+    iteration: 1
+  canvasConfigs:
+  - canvas: {fileID: 1024658030}
+    isForeground: 0
+    blur: 1
+    hasLiquidGlass: 0
+    blurConfig:
+      blurAlgorithm: 1
+      alphaBlendColor: {r: 0, g: 0, b: 0, a: 0.5019608}
+      blurMip: 0
+      gaussianSigma: 3.65
+      iteration: 1
+  - canvas: {fileID: 1631823088}
+    isForeground: 1
+    blur: 0
+    hasLiquidGlass: 0
+    blurConfig:
+      blurAlgorithm: 0
+      alphaBlendColor: {r: 0, g: 0, b: 0, a: 0}
+      blurMip: 0
+      gaussianSigma: 0
+      iteration: 0
+  - canvas: {fileID: 1148132114}
+    isForeground: 0
+    blur: 0
+    hasLiquidGlass: 0
+    blurConfig:
+      blurAlgorithm: 0
+      alphaBlendColor: {r: 0, g: 0, b: 0, a: 0}
+      blurMip: 0
+      gaussianSigma: 0
+      iteration: 0
+  - canvas: {fileID: 965123221}
+    isForeground: 1
+    blur: 0
+    hasLiquidGlass: 1
+    blurConfig:
+      blurAlgorithm: 0
+      alphaBlendColor: {r: 0, g: 0, b: 0, a: 0}
+      blurMip: 0
+      gaussianSigma: 0
+      iteration: 0
 --- !u!1 &1024658028
 GameObject:
   m_ObjectHideFlags: 0
@@ -976,7 +1042,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc5a8c1cc48241b2a544890a67fb2d18, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  feature: {fileID: 1367173693722032479, guid: 264474623b4d69344bc078bd79ea79f7, type: 2}
   checkInterval: 0
 --- !u!1 &1066916482
 GameObject:
@@ -989,8 +1054,9 @@ GameObject:
   - component: {fileID: 1066916483}
   - component: {fileID: 1066916484}
   - component: {fileID: 1066916485}
-  m_Layer: 9
-  m_Name: UICanvas (1)
+  - component: {fileID: 1066916486}
+  m_Layer: 10
+  m_Name: UITop
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1010,7 +1076,7 @@ RectTransform:
   m_Children:
   - {fileID: 1084968848}
   - {fileID: 1094120740}
-  m_Father: {fileID: 965123220}
+  m_Father: {fileID: 1938411904}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -1052,8 +1118,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc5a8c1cc48241b2a544890a67fb2d18, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  feature: {fileID: 1367173693722032479, guid: 264474623b4d69344bc078bd79ea79f7, type: 2}
   checkInterval: 0
+--- !u!114 &1066916486
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1066916482}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d79fd7b349364961919670c54dada337, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  prevLayer: 0
+  lowerCanvasBlurConfig:
+    blurAlgorithm: 1
+    alphaBlendColor: {r: 0, g: 0, b: 0, a: 0.72156864}
+    blurMip: 4.11
+    gaussianSigma: 4.4
+    iteration: 1
+  canvasConfigs:
+  - canvas: {fileID: 1066916484}
+    isForeground: 1
+    blur: 0
+    hasLiquidGlass: 1
+    blurConfig:
+      blurAlgorithm: 0
+      alphaBlendColor: {r: 0, g: 0, b: 0, a: 0}
+      blurMip: 0
+      gaussianSigma: 0
+      iteration: 0
 --- !u!1 &1084968847
 GameObject:
   m_ObjectHideFlags: 0
@@ -1067,7 +1162,7 @@ GameObject:
   - component: {fileID: 1084968851}
   - component: {fileID: 1084968850}
   - component: {fileID: 1084968849}
-  m_Layer: 9
+  m_Layer: 10
   m_Name: Button (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1117,7 +1212,7 @@ MonoBehaviour:
   edgeRimWidth: 1
   rimLight: {r: 1, g: 1, b: 1, a: 0.39607844}
   glassTint: {r: 1, g: 0, b: 0, a: 0.18431373}
-  backgroundRTName: _UI_BG_0
+  backgroundRTName: 
   autoAssignMaterial: 1
   continuousUpdate: 1
 --- !u!114 &1084968850
@@ -1214,7 +1309,7 @@ GameObject:
   - component: {fileID: 1094120743}
   - component: {fileID: 1094120742}
   - component: {fileID: 1094120741}
-  m_Layer: 9
+  m_Layer: 10
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1263,7 +1358,7 @@ MonoBehaviour:
   edgeRimWidth: 6
   rimLight: {r: 1, g: 1, b: 1, a: 0.19215687}
   glassTint: {r: 0, g: 0, b: 1, a: 0.40392157}
-  backgroundRTName: _UI_BG_0
+  backgroundRTName: 
   autoAssignMaterial: 1
   continuousUpdate: 1
 --- !u!114 &1094120742
@@ -1317,7 +1412,7 @@ GameObject:
   - component: {fileID: 1148132112}
   - component: {fileID: 1148132114}
   m_Layer: 8
-  m_Name: Image
+  m_Name: HeadImage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1816,7 +1911,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc5a8c1cc48241b2a544890a67fb2d18, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  feature: {fileID: 1367173693722032479, guid: 264474623b4d69344bc078bd79ea79f7, type: 2}
   checkInterval: 0
 --- !u!21 &1682797445
 Material:
@@ -1829,7 +1923,8 @@ Material:
   m_Shader: {fileID: 4800000, guid: 6c289ab28ae893b4dbbf03f860ec36ef, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - WITHOUT_UI_BG
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -1882,7 +1977,7 @@ GameObject:
   - component: {fileID: 1769651053}
   - component: {fileID: 1769651055}
   - component: {fileID: 1769651054}
-  m_Layer: 5
+  m_Layer: 9
   m_Name: Text (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2016,8 +2111,8 @@ GameObject:
   - component: {fileID: 1816375798}
   - component: {fileID: 1816375799}
   - component: {fileID: 1816375800}
-  m_Layer: 5
-  m_Name: UICanvas
+  m_Layer: 9
+  m_Name: UIUpper
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2034,9 +2129,7 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
-  m_Children:
-  - {fileID: 855365806}
-  - {fileID: 894721300}
+  m_Children: []
   m_Father: {fileID: 965123220}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -2079,7 +2172,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc5a8c1cc48241b2a544890a67fb2d18, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  feature: {fileID: 1367173693722032479, guid: 264474623b4d69344bc078bd79ea79f7, type: 2}
   checkInterval: 0
 --- !u!1 &1873718843
 GameObject:
@@ -2227,7 +2319,7 @@ GameObject:
   - component: {fileID: 1901480891}
   - component: {fileID: 1901480890}
   - component: {fileID: 1901480889}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: MainCamera
   m_TagString: MainCamera
   m_Icon: {fileID: 0}
@@ -2425,6 +2517,7 @@ RectTransform:
   m_Children:
   - {fileID: 1901480892}
   - {fileID: 965123220}
+  - {fileID: 1066916483}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -2466,7 +2559,8 @@ Material:
   m_Shader: {fileID: 4800000, guid: 6c289ab28ae893b4dbbf03f860ec36ef, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - WITHOUT_UI_BG
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0

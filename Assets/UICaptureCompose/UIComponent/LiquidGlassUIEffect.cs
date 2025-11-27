@@ -131,6 +131,9 @@ namespace UICaptureCompose.UIComponent
         protected override void OnRectTransformDimensionsChange()
         {
             base.OnRectTransformDimensionsChange();
+            if(!isActiveAndEnabled)
+                return;
+            
             SetParamsOnMaterialInstance();
             if (_graphic) _graphic.SetMaterialDirty();
         }

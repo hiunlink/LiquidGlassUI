@@ -57,7 +57,7 @@ namespace UICaptureCompose.URP
             [ShowIf("blur")]
             public BlurAlgorithm blurAlgorithm = BlurAlgorithm.MipChain;
             [ShowIf("blur","blurAlgorithm", (int)BlurAlgorithm.GaussianSeparable)]
-            public Color alphaBlendColor = Color.white;
+            public Color alphaBlendColor = Color.clear;
             [ShowIf("blur","blurAlgorithm", (int)BlurAlgorithm.MipChain)]
             [Range(0, 8)] public float blurMip = 3;
             [ShowIf("blur","blurAlgorithm", (int)BlurAlgorithm.GaussianSeparable)]
@@ -449,6 +449,15 @@ namespace UICaptureCompose.URP
             if (!_tempRTMap.TryGetValue(textureName, out var textures))
                 return null;
             return textures.BlurRT.rt;
+        }
+
+        public void SetupLayerConfigs(List<LayerConfig> layerConfigs)
+        {
+            settings.layers = new LayerConfig[layerConfigs.Count];
+            for (var i = 0; i < layerConfigs.Count; i++)
+            {
+                settings.layers[i] = layerConfigs[i];
+            }
         }
 
         #endregion

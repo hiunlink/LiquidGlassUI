@@ -16,6 +16,12 @@ namespace UICaptureCompose.URP
         {
             BoolField = boolField;
         }
+        // 判断 enum
+        public ShowIfAttribute(string enumField, int enumValue)
+        {
+            EnumField = enumField;
+            EnumValue = enumValue;
+        }
 
         // 判断 bool AND enum
         public ShowIfAttribute(string boolField, string enumField, int enumValue)
