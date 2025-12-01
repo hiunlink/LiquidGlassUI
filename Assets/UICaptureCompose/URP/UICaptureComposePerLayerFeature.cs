@@ -108,7 +108,7 @@ namespace UICaptureCompose.URP
             public Material gaussianCompositeMat; // e.g. Hidden/UIBGCompositeCopyStencil
 
             [Header("按从远到近排序（config[0] 最底层）")]
-            public LayerConfig[] layers;
+            public List<LayerConfig> layers;
 
             [Header("注入时机")]
             public RenderPassEvent injectEvent = RenderPassEvent.BeforeRenderingTransparents;
@@ -172,7 +172,7 @@ namespace UICaptureCompose.URP
             {
                 return;
             }
-            if (settings.layers == null || settings.layers.Length == 0) return;
+            if (settings.layers == null || settings.layers.Count == 0) return;
             var layers = settings.layers;
             var evt = settings.injectEvent;
             
@@ -180,16 +180,16 @@ namespace UICaptureCompose.URP
             // === 在编辑器但未运行时强制每帧重绘 ==
             if (!Application.isPlaying)
             {
-                for (var i = 0; i < layers.Length; i++)
+                for (var i = 0; i < layers.Count; i++)
                 {
                     var config = layers[i];
                     config.SetDirty(true);
                 }
             }
-            var firstLayerToRender = layers.Length;
+            var firstLayerToRender = layers.Count;
             var firstLayerRenderTextureName = string.Empty;
             // - 找到第一个有变化的层
-            for (var i = 0; i < layers.Length; i++)
+            for (var i = 0; i < layers.Count; i++)
             {
                 var config = layers[i];
                 if (config.IsDirty)
@@ -208,7 +208,7 @@ namespace UICaptureCompose.URP
             }
 
             // - 之后的层都需要标记重新渲染
-            for (var i = firstLayerToRender; i < layers.Length; i++)
+            for (var i = firstLayerToRender; i < layers.Count; i++)
             {
                 var config = layers[i];
                 config.SetDirty(true);
@@ -218,7 +218,7 @@ namespace UICaptureCompose.URP
             var prevLayerToRender = Mathf.Max(firstLayerToRender - 1, 0);
 
             GlobalTextureInfo firstGlobalTextureInfo;
-            if (settings.layers.Length > prevLayerToRender)
+            if (settings.layers.Count > prevLayerToRender)
             {
                 var firstLayer = settings.layers[prevLayerToRender];
                 firstGlobalTextureInfo = GetOrCreateGlobalTextureInfo(firstLayer.globalTextureName,
@@ -235,7 +235,7 @@ namespace UICaptureCompose.URP
             EnsureGlobalTextures(camDesc, firstGlobalTextureInfo, useHDR, out var w, out var h);
 
             int curRtFrom = 0, curRtTo = 0, fgLayer = 0;
-            for (var layerIndex = firstLayerToRender; layerIndex < layers.Length; layerIndex++)
+            for (var layerIndex = firstLayerToRender; layerIndex < layers.Count; layerIndex++)
             {
                 var config = layers[layerIndex];
                 var prevLayer = layerIndex - 1;
@@ -251,7 +251,7 @@ namespace UICaptureCompose.URP
                         config.globalTextureName,
                         config.resolutionScale),
                         useHDR,out var w2, out var h2);
-                    for (var i = layerIndex + 1; i < layers.Length; i++)
+                    for (var i = layerIndex + 1; i < layers.Count; i++)
                     {
                         var nextConfig = layers[i];
                         if (nextConfig.globalTextureName == config.globalTextureName)
@@ -458,11 +458,7 @@ namespace UICaptureCompose.URP
 
         public void SetupLayerConfigs(List<LayerConfig> layerConfigs)
         {
-            settings.layers = new LayerConfig[layerConfigs.Count];
-            for (var i = 0; i < layerConfigs.Count; i++)
-            {
-                settings.layers[i] = layerConfigs[i];
-            }
+            settings.layers = layerConfigs;
         }
 
         #endregion
@@ -553,7 +549,7 @@ namespace UICaptureCompose.URP
             return cmd;
         }
 
-        private static bool UseStencilClip(int layer, LayerConfig[] layerConfigs, bool multilayerMix, bool composite,
+        private static bool UseStencilClip(int layer, List<LayerConfig> layerConfigs, bool multilayerMix, bool composite,
             int from, int to)
         {
             var config = layerConfigs[layer];
@@ -602,7 +598,7 @@ namespace UICaptureCompose.URP
             return false;
         }
 
-        private static bool ShouldDoOpaquePrepass(int i, LayerConfig[] layers, bool multilayerMix, int from, int to)
+        private static bool ShouldDoOpaquePrepass(int i, List<LayerConfig> layers, bool multilayerMix, int from, int to)
         {
             // 不叠加时，只要有模糊层就不能做Opaque优化
             if (!multilayerMix)
@@ -630,7 +626,7 @@ namespace UICaptureCompose.URP
             return true;
         }
 
-        private ScriptableRenderPass RenderForeground(RTHandle src, RTHandle depth, int layer, LayerConfig[] layers, 
+        private ScriptableRenderPass RenderForeground(RTHandle src, RTHandle depth, int layer, List<LayerConfig> layers, 
             RenderPassEvent evt, bool multilayerMix, int from, int to)
         {
             var config = layers[layer];

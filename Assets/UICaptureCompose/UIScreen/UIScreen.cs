@@ -41,6 +41,14 @@ namespace UICaptureCompose.UIScreen
 
             [ShowIf("blur")] 
             public CanvasBlurConfig blurConfig;
+
+            private LiquidGlassUIEffect[] _cachedLiquidGlasses;
+
+            public void SetCachedLiquidGlasses(LiquidGlassUIEffect[] liquidGlasses)
+            {
+                _cachedLiquidGlasses = liquidGlasses;
+            }
+            public LiquidGlassUIEffect[] cachedLiquidGlasses => _cachedLiquidGlasses;
         }
         [Header("是否开启底层模糊效果")]
         public bool lowerBlur = true;
@@ -98,7 +106,7 @@ namespace UICaptureCompose.UIScreen
         private void OnEnable()
         {
             Init();
-            UpdateRendererFeature();
+            UIScreenManager.Instance.UpdateRendererFeature(true);
             UIScreenManager.Instance.SetLowerUIScreenDirty(this);
         }
 
@@ -115,7 +123,7 @@ namespace UICaptureCompose.UIScreen
             {
                 return;
             }
-            UIScreenManager.Instance.SetLowerUIScreenDirty(this);
+            UIScreenManager.Instance.SetLowerUIScreenDirty(this,true);
         }
 
         private void FindLiquidGlassAndUpdateStates()
@@ -123,6 +131,7 @@ namespace UICaptureCompose.UIScreen
             foreach (var canvasConfig in canvasConfigs)
             {
                 var glassUIEffects = canvasConfig.canvas.transform.GetComponentsInChildren<LiquidGlassUIEffect>();
+                canvasConfig.SetCachedLiquidGlasses(glassUIEffects);
                 canvasConfig.hasLiquidGlass = glassUIEffects.Length > 0;
             }
         }
@@ -143,7 +152,7 @@ namespace UICaptureCompose.UIScreen
         [ContextMenu("更新渲染管线")]
         private void UpdateRendererFeature()
         {
-            UIScreenManager.Instance.UpdateRendererFeature();
+            UIScreenManager.Instance.UpdateRendererFeature(true);
         }
     }
 }

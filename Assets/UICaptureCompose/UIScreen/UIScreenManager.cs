@@ -40,10 +40,10 @@ namespace UICaptureCompose.UIScreen
         private const int EndLayer = 31;
         private readonly List<UIScreen> _screens = new();
         
-        private List<UICaptureComposePerLayerFeature.LayerConfig> _featureLayerConfigPool = new();
-        private List<WrapCanvasConfig> _wrapCanvasConfigPool = new();
-        private List<UICaptureComposePerLayerFeature.LayerConfig> _featureLayerConfigs = new();
-        private List<WrapCanvasConfig> _wrapCanvasConfigs = new();
+        private readonly List<UICaptureComposePerLayerFeature.LayerConfig> _featureLayerConfigPool = new();
+        private readonly List<WrapCanvasConfig> _wrapCanvasConfigPool = new();
+        private readonly List<UICaptureComposePerLayerFeature.LayerConfig> _featureLayerConfigs = new();
+        private readonly List<WrapCanvasConfig> _wrapCanvasConfigs = new();
 #if UNITY_EDITOR
         private UIScreenManager()
         {
@@ -70,14 +70,15 @@ namespace UICaptureCompose.UIScreen
             UpdateRendererFeature();
         }
                 
-        public void UpdateRendererFeature()
+        public void UpdateRendererFeature(bool sortScreen = false)
         {
             _rtIndex = 0;
             var curLayer = _startLayer;
             ClearFeatureLayerConfigs(_featureLayerConfigs);
             ClearWrapCanvasConfigs(_wrapCanvasConfigs);
             // rearrange _screens;
-            _screens.Sort(CompareHierarchy);
+            if (sortScreen)
+                _screens.Sort(CompareHierarchy);
             // setup renderer feature layer configs
             for (var uiLayer = 0; uiLayer < _screens.Count; uiLayer++)
             {
@@ -121,7 +122,7 @@ namespace UICaptureCompose.UIScreen
                 var nextLayerHasLiquidGlass = nextConfig != null && nextConfig.canvasConfig.hasLiquidGlass;
                 var changeRt = i == 0 || canvasConfig.hasLiquidGlass;
                 if (changeRt) _rtIndex++;
-                var rtName = "UI_BG_" + _rtIndex;
+                var rtName = GetRtName(_rtIndex);
                 featureLayerConfig.globalTextureName = rtName;
                 // === current blur ===
                 // == assign config
@@ -149,26 +150,26 @@ namespace UICaptureCompose.UIScreen
                 if (nextLayerHasLiquidGlass)
                 {
                     // According to next layer liquid glasses, calculate global blur config
-                    var nextBlurConfig = GetNextLayerLiquidGlassBlurConfig(nextConfig.canvasConfig.canvas.gameObject,
-                        nextFeatureLayerConfig.layer);
-                    featureLayerConfig.globalBlurAlgorithm = nextBlurConfig.globalBlurAlgorithm;
-                    featureLayerConfig.globalGaussianSigma = nextBlurConfig.globalGaussianSigma;
-                    featureLayerConfig.globalIteration = nextBlurConfig.globalIteration;
+                    GetNextLayerLiquidGlassBlurConfig(nextConfig.canvasConfig,
+                        nextFeatureLayerConfig.layer, ref _nextLayerGlobalBlurConfig);
+                    featureLayerConfig.globalBlurAlgorithm = _nextLayerGlobalBlurConfig.globalBlurAlgorithm;
+                    featureLayerConfig.globalGaussianSigma = _nextLayerGlobalBlurConfig.globalGaussianSigma;
+                    featureLayerConfig.globalIteration = _nextLayerGlobalBlurConfig.globalIteration;
                 }
                 else
                 {
                     featureLayerConfig.globalBlurAlgorithm = GlobalBlurAlgorithm.None;
                 }
                 // setup LiquidGlass's background rt name
-                SetupLiquidGlass(canvasConfig.canvas.transform, featureLayerConfig.layer, "UI_BG_" + (_rtIndex - 1));
+                SetupLiquidGlass(canvasConfig, featureLayerConfig.layer, GetRtName(_rtIndex - 1));
             }
             // Update renderer feature configs
             UICaptureEffectManager.Instance.SetupLayerConfigs(_featureLayerConfigs);
             // Update replace feature's rt name
-            UICaptureEffectManager.Instance.SetReplaceRtName("UI_BG_" + _rtIndex);
+            UICaptureEffectManager.Instance.SetReplaceRtName(GetRtName(_rtIndex));
         }
         
-        public void SetLowerUIScreenDirty(UIScreen uiScreen)
+        public void SetLowerUIScreenDirty(UIScreen uiScreen, bool sortScreen = false)
         {
             if (!uiScreen) return;
             for (var i = 0; i < _wrapCanvasConfigs.Count; i++)
@@ -235,10 +236,9 @@ namespace UICaptureCompose.UIScreen
             return 0;
         }
 
-        private GlobalBlurConfig GetNextLayerLiquidGlassBlurConfig(GameObject canvasGameObject, LayerMask layer)
+        private void GetNextLayerLiquidGlassBlurConfig(UIScreen.CanvasConfig canvasConfig, LayerMask layer, ref GlobalBlurConfig result)
         {
-            var result = new GlobalBlurConfig();
-            var liquidGlasses = canvasGameObject.GetComponentsInChildren<LiquidGlassUIEffect>(true);
+            var liquidGlasses = canvasConfig.cachedLiquidGlasses;
             foreach (var liquidGlass in liquidGlasses)
             {
                 if ((1 << liquidGlass.gameObject.layer & layer) > 0)
@@ -251,12 +251,11 @@ namespace UICaptureCompose.UIScreen
                         result.globalGaussianSigma = liquidGlass.gaussianSigma;
                 }
             }
-            return result;
         }
 
-        private void SetupLiquidGlass(Transform canvasTransform, LayerMask layer, string rtName)
+        private void SetupLiquidGlass(UIScreen.CanvasConfig canvasConfig, LayerMask layer, string rtName)
         {
-            var liquidGlasses = canvasTransform.GetComponentsInChildren<LiquidGlassUIEffect>(true);
+            var liquidGlasses = canvasConfig.cachedLiquidGlasses;
             foreach (var liquidGlass in liquidGlasses)
             {
                 if ((1 << liquidGlass.gameObject.layer & layer) > 0)
@@ -273,7 +272,9 @@ namespace UICaptureCompose.UIScreen
             public int globalIteration = 1;
         }
 
-        List<int> _layers = new ();
+        private GlobalBlurConfig _nextLayerGlobalBlurConfig = new();
+
+        private readonly List<int> _layers = new ();
         private bool TryInitLayerConfigs(UIScreen uiScreen, List<UICaptureComposePerLayerFeature.LayerConfig> configs, 
             ref int beginLayer)
         {
@@ -311,8 +312,9 @@ namespace UICaptureCompose.UIScreen
 
         private void SetLayers(GameObject go, LayerMask layer)
         {
-            foreach (Transform child in go.transform)
+            for (var i = 0; i < go.transform.childCount; i++)
             {
+                var child = go.transform.GetChild(i);
                 SetLayers(child.gameObject, layer);
             }
 
@@ -322,6 +324,14 @@ namespace UICaptureCompose.UIScreen
         private bool CheckLayerIsValid(int layer)
         {
             return layer >= _startLayer && layer <= EndLayer;
+        }
+
+        private readonly Dictionary<int, string> _rtNameMap = new();
+        private string GetRtName(int rtIndex)
+        {
+            if (!_rtNameMap.ContainsKey(rtIndex))
+                _rtNameMap[rtIndex] = "UI_BG_" + rtIndex;
+            return _rtNameMap[rtIndex];
         }
         
         #region Config Pool

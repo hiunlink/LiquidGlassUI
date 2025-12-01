@@ -1056,6 +1056,7 @@ GameObject:
   - component: {fileID: 1066916484}
   - component: {fileID: 1066916485}
   - component: {fileID: 1066916486}
+  - component: {fileID: 1066916487}
   m_Layer: 10
   m_Name: UITop
   m_TagString: Untagged
@@ -1133,7 +1134,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lowerBlur: 1
-  lowerBlurStrength: 1
+  lowerBlurStrength: 0
   lowerCanvasBlurConfig:
     blurAlgorithm: 1
     alphaBlendColor: {r: 0, g: 0, b: 0, a: 0.90588236}
@@ -1151,6 +1152,21 @@ MonoBehaviour:
       blurMip: 0
       gaussianSigma: 0
       iteration: 0
+--- !u!114 &1066916487
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1066916482}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98ff8a38a3414703b681e8d4c6cf9f1c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _from: 0
+  _to: 1
+  _duration: 1
 --- !u!1 &1084968847
 GameObject:
   m_ObjectHideFlags: 0
