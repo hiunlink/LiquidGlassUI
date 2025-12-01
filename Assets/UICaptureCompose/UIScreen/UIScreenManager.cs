@@ -131,6 +131,7 @@ namespace UICaptureCompose.UIScreen
                 featureLayerConfig.blurMip = canvasConfig.blurConfig.blurMip;
                 featureLayerConfig.gaussianSigma = canvasConfig.blurConfig.gaussianSigma;
                 featureLayerConfig.iteration = canvasConfig.blurConfig.iteration;
+                featureLayerConfig.blurStrength = 1;
                 // == next UIScreen has BGBlur 
                 if (wrapConfig.lowerCanvasBlurConfig != null)
                 {

@@ -58,7 +58,7 @@ namespace UICaptureCompose.UIScreen
 
 #if UNITY_EDITOR
         private static bool _isExitingPlayMode = false;
-        private static bool _isExitingEditorMode = true;
+        private static bool _isExitingEditorMode = false;
 
         static UIScreen()
         {
@@ -73,12 +73,18 @@ namespace UICaptureCompose.UIScreen
                 _isExitingPlayMode = true;
             // 完成转换后重置标记
             if (state == PlayModeStateChange.EnteredEditMode)
+            {
                 _isExitingPlayMode = false;
+                _isExitingEditorMode = false;
+            }
 
             if (state == PlayModeStateChange.ExitingEditMode)
                 _isExitingEditorMode = true;
             if (state == PlayModeStateChange.EnteredPlayMode)
+            {
                 _isExitingEditorMode = false;
+                _isExitingPlayMode = false;
+            }
         }
 #endif
         
@@ -93,16 +99,23 @@ namespace UICaptureCompose.UIScreen
         {
             Init();
             UpdateRendererFeature();
+            UIScreenManager.Instance.SetLowerUIScreenDirty(this);
         }
 
         private void OnDisable()
         {
             UIScreenManager.Instance.RemoveUIScreen(this);
+
+#if UNITY_EDITOR
+            var willChange = EditorApplication.isPlayingOrWillChangePlaymode && !Application.isPlaying;
+            if (willChange && !_isExitingEditorMode)
+                _isExitingEditorMode = true;
+#endif
             if (_isExitingPlayMode || _isExitingEditorMode)
             {
                 return;
             }
-            UpdateRendererFeature();
+            UIScreenManager.Instance.SetLowerUIScreenDirty(this);
         }
 
         private void FindLiquidGlassAndUpdateStates()
