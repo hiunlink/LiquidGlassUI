@@ -114,6 +114,19 @@ namespace UICaptureCompose.UIScreen
             }
         }
 
+        #region Public
+
+        public void SetLowerBlurStrength(float blurStrength)
+        {
+            if (!Mathf.Approximately(lowerBlurStrength, blurStrength))
+            {
+                lowerBlurStrength = blurStrength;
+                UIScreenManager.Instance.SetLowerUIScreenDirty(this);
+            }
+        }
+
+        #endregion
+
         [ContextMenu("更新渲染管线")]
         private void UpdateRendererFeature()
         {

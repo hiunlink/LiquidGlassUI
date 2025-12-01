@@ -878,6 +878,7 @@ RectTransform:
   - {fileID: 1148132111}
   - {fileID: 855365806}
   - {fileID: 894721300}
+  - {fileID: 1066916483}
   m_Father: {fileID: 1938411904}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -1076,7 +1077,7 @@ RectTransform:
   m_Children:
   - {fileID: 1084968848}
   - {fileID: 1094120740}
-  m_Father: {fileID: 1938411904}
+  m_Father: {fileID: 965123220}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -1132,7 +1133,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lowerBlur: 1
-  lowerBlurStrength: 0
+  lowerBlurStrength: 1
   lowerCanvasBlurConfig:
     blurAlgorithm: 1
     alphaBlendColor: {r: 0, g: 0, b: 0, a: 0.90588236}
@@ -2446,7 +2447,6 @@ RectTransform:
   m_Children:
   - {fileID: 1901480892}
   - {fileID: 965123220}
-  - {fileID: 1066916483}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}

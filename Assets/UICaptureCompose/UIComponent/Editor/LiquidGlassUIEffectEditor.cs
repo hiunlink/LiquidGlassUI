@@ -14,7 +14,7 @@ namespace UICaptureCompose.UIComponent.Editor
         /// 当 Inspector 中的 gaussianSigma 被修改时触发。
         /// 参数为被修改的组件实例。
         /// </summary>
-        public static Action OnGaussianSigmaChanged;
+        public static Action<UIScreen.UIScreen> OnPropertiesChanged;
     }
 
     /// <summary>
@@ -64,7 +64,7 @@ namespace UICaptureCompose.UIComponent.Editor
                 if (!Mathf.Approximately(oldSigma, newSigma))
                 {
                     // 发事件：交给你的渲染管线去处理具体的刷新
-                    LiquidGlassUIEffectEditorHooks.OnGaussianSigmaChanged?.Invoke();
+                    LiquidGlassUIEffectEditorHooks.OnPropertiesChanged?.Invoke(null);
                 }
             }
         }

@@ -101,7 +101,7 @@ MonoBehaviour:
       globalTextureName: UI_BG_1
       resolutionScale: 1
       globalBlurAlgorithm: 0
-      globalGaussianSigma: 3.58
+      globalGaussianSigma: 1.34
       globalIteration: 1
     - layer:
         serializedVersion: 2
@@ -113,11 +113,11 @@ MonoBehaviour:
       blurMip: 0
       gaussianSigma: 0
       iteration: 0
-      blurStrength: 0.77
+      blurStrength: 1
       globalTextureName: UI_BG_1
       resolutionScale: 1
       globalBlurAlgorithm: 0
-      globalGaussianSigma: 4.62
+      globalGaussianSigma: 2
       globalIteration: 1
     - layer:
         serializedVersion: 2
@@ -133,7 +133,7 @@ MonoBehaviour:
       globalTextureName: UI_BG_1
       resolutionScale: 1
       globalBlurAlgorithm: 3
-      globalGaussianSigma: 3.58
+      globalGaussianSigma: 3.52
       globalIteration: 1
     - layer:
         serializedVersion: 2
@@ -141,15 +141,15 @@ MonoBehaviour:
       isForeground: 1
       blur: 1
       blurAlgorithm: 1
-      alphaBlendColor: {r: 0, g: 0, b: 0, a: 0.72156864}
+      alphaBlendColor: {r: 0, g: 0, b: 0, a: 0.90588236}
       blurMip: 4.11
-      gaussianSigma: 4.4
+      gaussianSigma: 4.87
       iteration: 1
-      blurStrength: 0.77
+      blurStrength: 1
       globalTextureName: UI_BG_2
       resolutionScale: 1
       globalBlurAlgorithm: 3
-      globalGaussianSigma: 4.62
+      globalGaussianSigma: 1.34
       globalIteration: 1
     - layer:
         serializedVersion: 2
@@ -161,11 +161,11 @@ MonoBehaviour:
       blurMip: 0
       gaussianSigma: 0
       iteration: 0
-      blurStrength: 0.77
+      blurStrength: 1
       globalTextureName: UI_BG_3
       resolutionScale: 1
       globalBlurAlgorithm: 0
-      globalGaussianSigma: 4.62
+      globalGaussianSigma: 1.34
       globalIteration: 1
     injectEvent: 300
 --- !u!114 &6576797754651316054

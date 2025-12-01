@@ -9,10 +9,12 @@ namespace UICaptureCompose.UIScreen.Editor
     {
         private SerializedProperty _blurStrengthProp;
         private SerializedProperty _lowerBlurConfig;
+        private UIScreen _target;
         private void OnEnable()
         {
             _blurStrengthProp = serializedObject.FindProperty("lowerBlurStrength");
             _lowerBlurConfig = serializedObject.FindProperty("lowerCanvasBlurConfig");
+            _target = target as UIScreen;
         }
         
         public override void OnInspectorGUI()
@@ -59,7 +61,7 @@ namespace UICaptureCompose.UIScreen.Editor
                     oldBlurColor != newBlurColor)
                 {
                     // 发事件：交给你的渲染管线去处理具体的刷新
-                    LiquidGlassUIEffectEditorHooks.OnGaussianSigmaChanged?.Invoke();
+                    LiquidGlassUIEffectEditorHooks.OnPropertiesChanged?.Invoke(_target);
                 }
             }
         }

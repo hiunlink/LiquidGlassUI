@@ -34,7 +34,8 @@ namespace UICaptureCompose.UIScreen
                 return _instance;
             }
         }
-
+        
+        private int _rtIndex = 0;
         private int _startLayer = 6;
         private const int EndLayer = 31;
         private readonly List<UIScreen> _screens = new();
@@ -46,14 +47,18 @@ namespace UICaptureCompose.UIScreen
 #if UNITY_EDITOR
         private UIScreenManager()
         {
-            LiquidGlassUIEffectEditorHooks.OnGaussianSigmaChanged += OnSigmaChanged;
+            LiquidGlassUIEffectEditorHooks.OnPropertiesChanged += OnSigmaChanged;
         }
 
-        private void OnSigmaChanged()
+        private void OnSigmaChanged(UIScreen uiScreen)
         {
             UpdateRendererFeature();
+            SetLowerUIScreenDirty(uiScreen);
         }
 #endif
+
+        #region Public
+      
         public void Setup(int startLayer)
         {
             _startLayer = startLayer;
@@ -64,8 +69,7 @@ namespace UICaptureCompose.UIScreen
             AddUIScreen(screenConfig);
             UpdateRendererFeature();
         }
-
-        private int _rtIndex = 0;
+                
         public void UpdateRendererFeature()
         {
             _rtIndex = 0;
@@ -162,6 +166,54 @@ namespace UICaptureCompose.UIScreen
             // Update replace feature's rt name
             UICaptureEffectManager.Instance.SetReplaceRtName("UI_BG_" + _rtIndex);
         }
+        
+        public void SetLowerUIScreenDirty(UIScreen uiScreen)
+        {
+            if (!uiScreen) return;
+            for (var i = 0; i < _wrapCanvasConfigs.Count; i++)
+            {
+                var featureLayerConfig = _featureLayerConfigs[i];
+                var wrapConfig = _wrapCanvasConfigs[i];
+                if (wrapConfig.lowerCanvasBlurConfig != null
+                    && wrapConfig.lowerCanvasBlurConfig == uiScreen.lowerCanvasBlurConfig)
+                {
+                    UpdateRendererFeature();
+                    // set dirty
+                    UICaptureEffectManager.Instance.SetDirty(featureLayerConfig.layer,true);
+                }
+            }
+        }
+        
+        public void AddUIScreen(UIScreen screenConfig)
+        {
+            var replaceIndex = -1;
+            // 判断是否重复
+            for (var i = 0; i < _screens.Count; i++)
+            {
+                var config = _screens[i];
+                if (screenConfig.Gid == config.Gid)
+                {
+                    replaceIndex = i;
+                    break;
+                }
+            }
+
+            if (replaceIndex == -1)
+            {
+                _screens.Add(screenConfig);
+            }
+            else
+            {
+                _screens[replaceIndex] = screenConfig;
+            }
+        }
+
+        public void RemoveUIScreen(UIScreen uiScreen)
+        {
+            _screens.Remove(uiScreen);
+        }
+        
+        #endregion
 
         private int CompareHierarchy(UIScreen x, UIScreen y)
         {
@@ -270,35 +322,7 @@ namespace UICaptureCompose.UIScreen
         {
             return layer >= _startLayer && layer <= EndLayer;
         }
-        public void AddUIScreen(UIScreen screenConfig)
-        {
-            var replaceIndex = -1;
-            // 判断是否重复
-            for (var i = 0; i < _screens.Count; i++)
-            {
-                var config = _screens[i];
-                if (screenConfig.Gid == config.Gid)
-                {
-                    replaceIndex = i;
-                    break;
-                }
-            }
-
-            if (replaceIndex == -1)
-            {
-                _screens.Add(screenConfig);
-            }
-            else
-            {
-                _screens[replaceIndex] = screenConfig;
-            }
-        }
-
-        public void RemoveUIScreen(UIScreen uiScreen)
-        {
-            _screens.Remove(uiScreen);
-        }
-
+        
         #region Config Pool
 
         private void ClearFeatureLayerConfigs(List<UICaptureComposePerLayerFeature.LayerConfig> featureLayerConfigList)
