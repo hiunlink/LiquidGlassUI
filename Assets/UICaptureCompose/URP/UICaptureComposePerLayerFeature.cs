@@ -64,6 +64,8 @@ namespace UICaptureCompose.URP
             [Range(0f, 6f)] public float gaussianSigma = 2.0f;
             [ShowIf("blur","blurAlgorithm", (int)BlurAlgorithm.GaussianSeparable)]
             [Range(1, 5)] public int iteration = 1;
+            [ShowIf("blur","blurAlgorithm", (int)BlurAlgorithm.GaussianSeparable)]
+            [Range(0, 1)] public float blurStrength = 1;
             
             // 输出全局贴图，填空不输出
             [Header("输出全局贴图名（供 UI 玻璃采样 / Replace 使用）")]
@@ -372,9 +374,12 @@ namespace UICaptureCompose.URP
                             var p = PassPool.GetOrCreateGaussian(layerIndex, TagUtils.GetGaussianTag(layerIndex), evt);
                             p.Setup(_blurRT, tmpRT, dstRT, _baseCol, _baseDS);
                             p.SetSharedMaterials(_matGauss, _matCopy);
-                            p.SetParams(config.iteration, config.gaussianSigma, 
-                                Mathf.Min(config.gaussianSigma, 4f), config.alphaBlendColor,
-                                useStencilClip, useStencilClipComposite, stencilVal);
+                            var interpolatedSigma = Mathf.Lerp(0, config.gaussianSigma, config.blurStrength);
+                            var interpolatedBlendColor =
+                                Color.Lerp(Color.clear, config.alphaBlendColor, config.blurStrength);
+                            p.SetParams(config.iteration, interpolatedSigma, 
+                                Mathf.Min(interpolatedSigma, 4f), // mipMap和interpolatedSigma线性相关优化模糊效果
+                                interpolatedBlendColor, useStencilClip, useStencilClipComposite, stencilVal);
                             _tempPasses.Add(p);
                             evt++;
                             break;
@@ -383,13 +388,13 @@ namespace UICaptureCompose.URP
                 }
                 
                 // 需要输出模糊贴图
-                var generateMips = (config.globalBlurAlgorithm & GlobalBlurAlgorithm.MipChain) > 0;
                 var generateGaussian = (config.globalBlurAlgorithm & GlobalBlurAlgorithm.GaussianSeparable) > 0;
+                var generateMips = (config.globalBlurAlgorithm & GlobalBlurAlgorithm.MipChain) > 0;
                 // ---------- Phase M：最终 baseRT 也要有 MIP ----------
-                if (generateMips)
+                if (generateMips || generateGaussian)
                 {
                     var pm = PassPool.GetOrCreateGenMip(layerIndex,PGlobalmipsBasertTag, evt);
-                    pm.Setup(_baseCol, generateMips);
+                    pm.Setup(_baseCol, true);
                     _tempPasses.Add(pm);
                     evt++;
                 }
@@ -407,7 +412,7 @@ namespace UICaptureCompose.URP
                     evt++;
                 
                     var pm = PassPool.GetOrCreateGenMip2(layerIndex,MGlobalmipsBlurrtTag, evt);
-                    pm.Setup(_blurRT, generateMips);
+                    pm.Setup(_blurRT, true);
                     _tempPasses.Add(pm);
                     evt++;
                     Shader.SetGlobalTexture(_blurGid, _blurRT);

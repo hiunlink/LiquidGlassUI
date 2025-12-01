@@ -74,7 +74,7 @@ namespace UICaptureCompose.URP
 
         public void UpdateSettings()
         {
-            _pass.UpdateSettings();
+            _pass?.UpdateSettings();
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData data)

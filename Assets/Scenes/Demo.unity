@@ -268,8 +268,7 @@ Material:
   m_Shader: {fileID: 4800000, guid: 6c289ab28ae893b4dbbf03f860ec36ef, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
-  - WITHOUT_UI_BG
+  m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -302,7 +301,7 @@ Material:
     - _RefrLODBias: 1.06
     - _RefrMag: 0.042735044
     - _UIBG_Lod: 3.04
-    - _UseBlurBG: 1
+    - _UseBlurBG: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _IOR: {r: 1.51, g: 1.52, b: 1.53, a: 0}
@@ -322,8 +321,7 @@ Material:
   m_Shader: {fileID: 4800000, guid: 6c289ab28ae893b4dbbf03f860ec36ef, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
-  - WITHOUT_UI_BG
+  m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -551,6 +549,7 @@ MonoBehaviour:
   borderWidthPx: 4
   blurAlgorithm: 1
   mipMapLod: 4.06
+  gaussianSigma: 5.11
   refractionEdgeWidth: 35
   refractionMagnitude: 100
   chromaticAberration: 33
@@ -558,7 +557,7 @@ MonoBehaviour:
   edgeRimWidth: 2
   rimLight: {r: 1, g: 1, b: 1, a: 0.24705882}
   glassTint: {r: 0, g: 0, b: 0, a: 0}
-  backgroundRTName: 
+  backgroundRTName: UI_BG_1
   autoAssignMaterial: 1
   continuousUpdate: 1
 --- !u!1 &894721299
@@ -617,14 +616,15 @@ MonoBehaviour:
   borderWidthPx: 4
   blurAlgorithm: 2
   mipMapLod: 3.87
+  gaussianSigma: 3.52
   refractionEdgeWidth: 35
   refractionMagnitude: 100
   chromaticAberration: 33
-  refractionLODBias: 1.85
+  refractionLODBias: 4
   edgeRimWidth: 1
   rimLight: {r: 1, g: 1, b: 1, a: 0.20392157}
   glassTint: {r: 0.24528301, g: 0.24528301, b: 0.24528301, a: 0.6313726}
-  backgroundRTName: 
+  backgroundRTName: UI_BG_1
   autoAssignMaterial: 1
   continuousUpdate: 1
 --- !u!114 &894721302
@@ -877,7 +877,6 @@ RectTransform:
   - {fileID: 1631823087}
   - {fileID: 1148132111}
   - {fileID: 855365806}
-  - {fileID: 1816375798}
   - {fileID: 894721300}
   m_Father: {fileID: 1938411904}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -921,7 +920,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d79fd7b349364961919670c54dada337, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  prevLayer: 0
+  lowerBlur: 0
+  lowerBlurStrength: 1
   lowerCanvasBlurConfig:
     blurAlgorithm: 1
     alphaBlendColor: {r: 0, g: 0, b: 0, a: 0.7647059}
@@ -1131,16 +1131,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d79fd7b349364961919670c54dada337, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  prevLayer: 0
+  lowerBlur: 1
+  lowerBlurStrength: 0
   lowerCanvasBlurConfig:
     blurAlgorithm: 1
-    alphaBlendColor: {r: 0, g: 0, b: 0, a: 0.72156864}
+    alphaBlendColor: {r: 0, g: 0, b: 0, a: 0.90588236}
     blurMip: 4.11
-    gaussianSigma: 4.4
+    gaussianSigma: 4.87
     iteration: 1
   canvasConfigs:
   - canvas: {fileID: 1066916484}
-    isForeground: 1
+    isForeground: 0
     blur: 0
     hasLiquidGlass: 1
     blurConfig:
@@ -1204,15 +1205,16 @@ MonoBehaviour:
   cornerRadiusPx: 90
   borderWidthPx: 4
   blurAlgorithm: 2
-  mipMapLod: 4.85
+  mipMapLod: 3.93
+  gaussianSigma: 1.34
   refractionEdgeWidth: 35
   refractionMagnitude: 100
   chromaticAberration: 33
-  refractionLODBias: 1.28
+  refractionLODBias: 0.49
   edgeRimWidth: 1
   rimLight: {r: 1, g: 1, b: 1, a: 0.39607844}
   glassTint: {r: 1, g: 0, b: 0, a: 0.18431373}
-  backgroundRTName: 
+  backgroundRTName: UI_BG_2
   autoAssignMaterial: 1
   continuousUpdate: 1
 --- !u!114 &1084968850
@@ -1349,8 +1351,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cornerRadiusPx: 90
   borderWidthPx: 4
-  blurAlgorithm: 2
+  blurAlgorithm: 1
   mipMapLod: 3.04
+  gaussianSigma: 4
   refractionEdgeWidth: 35
   refractionMagnitude: 100
   chromaticAberration: 33
@@ -1358,7 +1361,7 @@ MonoBehaviour:
   edgeRimWidth: 6
   rimLight: {r: 1, g: 1, b: 1, a: 0.19215687}
   glassTint: {r: 0, g: 0, b: 1, a: 0.40392157}
-  backgroundRTName: 
+  backgroundRTName: UI_BG_2
   autoAssignMaterial: 1
   continuousUpdate: 1
 --- !u!114 &1094120742
@@ -1923,8 +1926,7 @@ Material:
   m_Shader: {fileID: 4800000, guid: 6c289ab28ae893b4dbbf03f860ec36ef, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
-  - WITHOUT_UI_BG
+  m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -1954,7 +1956,7 @@ Material:
     - _Highlight: 0
     - _RefrAberration: 33
     - _RefrDim: 0.014957265
-    - _RefrLODBias: 1.85
+    - _RefrLODBias: 4
     - _RefrMag: 0.042735044
     - _UIBG_Lod: 3.87
     - _UseBlurBG: 1
@@ -2100,79 +2102,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1769651052}
   m_CullTransparentMesh: 1
---- !u!1 &1816375797
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1816375798}
-  - component: {fileID: 1816375799}
-  - component: {fileID: 1816375800}
-  m_Layer: 9
-  m_Name: UIUpper
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &1816375798
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1816375797}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 1
-  m_Children: []
-  m_Father: {fileID: 965123220}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!223 &1816375799
-Canvas:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1816375797}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_RenderMode: 2
-  m_Camera: {fileID: 0}
-  m_PlaneDistance: 100
-  m_PixelPerfect: 0
-  m_ReceivesEvents: 1
-  m_OverrideSorting: 0
-  m_OverridePixelPerfect: 0
-  m_SortingBucketNormalizedSize: 0
-  m_VertexColorAlwaysGammaSpace: 1
-  m_AdditionalShaderChannelsFlag: 25
-  m_UpdateRectTransformForStandalone: 0
-  m_SortingLayerID: 0
-  m_SortingOrder: 0
-  m_TargetDisplay: 0
---- !u!114 &1816375800
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1816375797}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dc5a8c1cc48241b2a544890a67fb2d18, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  checkInterval: 0
 --- !u!1 &1873718843
 GameObject:
   m_ObjectHideFlags: 0
@@ -2559,8 +2488,7 @@ Material:
   m_Shader: {fileID: 4800000, guid: 6c289ab28ae893b4dbbf03f860ec36ef, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
-  - WITHOUT_UI_BG
+  m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -2590,9 +2518,9 @@ Material:
     - _Highlight: 1
     - _RefrAberration: 33
     - _RefrDim: 0.014957265
-    - _RefrLODBias: 1.28
+    - _RefrLODBias: 0.49
     - _RefrMag: 0.042735044
-    - _UIBG_Lod: 4.85
+    - _UIBG_Lod: 3.93
     - _UseBlurBG: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}

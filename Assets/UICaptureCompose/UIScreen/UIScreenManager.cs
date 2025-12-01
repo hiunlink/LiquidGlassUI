@@ -2,6 +2,9 @@
 using UICaptureCompose.UIComponent;
 using UICaptureCompose.URP;
 using UnityEngine;
+#if UNITY_EDITOR
+using UICaptureCompose.UIComponent.Editor;
+#endif
 
 namespace UICaptureCompose.UIScreen
 {
@@ -9,9 +12,16 @@ namespace UICaptureCompose.UIScreen
     {
         private class WrapCanvasConfig
         {
-            public int prevLayer = 1;
+            public float lowerBlurStrength = 1;
             public CanvasBlurConfig lowerCanvasBlurConfig = null;
             public UIScreen.CanvasConfig canvasConfig;
+
+            public void Reset()
+            {
+                lowerBlurStrength = 1;
+                lowerCanvasBlurConfig = null;
+                canvasConfig = null;
+            }
         }
         
         private static UIScreenManager _instance;
@@ -25,12 +35,25 @@ namespace UICaptureCompose.UIScreen
             }
         }
 
-        private const float GlobalBlurSigma = 5;
-        private const int GlobalBlurIteration = 1;
-        
         private int _startLayer = 6;
         private const int EndLayer = 31;
         private readonly List<UIScreen> _screens = new();
+        
+        private List<UICaptureComposePerLayerFeature.LayerConfig> _featureLayerConfigPool = new();
+        private List<WrapCanvasConfig> _wrapCanvasConfigPool = new();
+        private List<UICaptureComposePerLayerFeature.LayerConfig> _featureLayerConfigs = new();
+        private List<WrapCanvasConfig> _wrapCanvasConfigs = new();
+#if UNITY_EDITOR
+        private UIScreenManager()
+        {
+            LiquidGlassUIEffectEditorHooks.OnGaussianSigmaChanged += OnSigmaChanged;
+        }
+
+        private void OnSigmaChanged()
+        {
+            UpdateRendererFeature();
+        }
+#endif
         public void Setup(int startLayer)
         {
             _startLayer = startLayer;
@@ -47,44 +70,50 @@ namespace UICaptureCompose.UIScreen
         {
             _rtIndex = 0;
             var curLayer = _startLayer;
-            var featureLayerConfigs = new List<UICaptureComposePerLayerFeature.LayerConfig>();
-            var wrapCanvasConfigs = new List<WrapCanvasConfig>();
+            ClearFeatureLayerConfigs(_featureLayerConfigs);
+            ClearWrapCanvasConfigs(_wrapCanvasConfigs);
+            // rearrange _screens;
+            _screens.Sort(CompareHierarchy);
             // setup renderer feature layer configs
             for (var uiLayer = 0; uiLayer < _screens.Count; uiLayer++)
             {
                 var uiScreen = _screens[uiLayer];
-                if (!TryInitLayerConfigs(uiScreen, featureLayerConfigs, ref curLayer))
+                if (!TryInitLayerConfigs(uiScreen, _featureLayerConfigs, ref curLayer))
                     break;
                 
                 for (var i = 0; i < uiScreen.canvasConfigs.Count; i++)
                 {
                     var canvasConfig = uiScreen.canvasConfigs[i];
-                    var wrapConfig = new WrapCanvasConfig()
-                    {
-                        canvasConfig = canvasConfig,
-                    };
-                    wrapCanvasConfigs.Add(wrapConfig);
+                    var wrapConfig = GetOrCreateWrapCanvasConfig();
+                    wrapConfig.canvasConfig = canvasConfig;
+                    _wrapCanvasConfigs.Add(wrapConfig);
                     // Check next uiScreen lower canvas blur config
                     if (i == uiScreen.canvasConfigs.Count - 1)
                     {
                         var nextUiLayer = uiLayer + 1;
                         var nextUiScreen = _screens.Count > nextUiLayer ? _screens[nextUiLayer] : null;
-                        if (nextUiScreen is { prevLayer: 1 })
+                        if (nextUiScreen is { lowerBlur: true })
                         {
-                            wrapConfig.prevLayer = nextUiScreen.prevLayer;
+                            wrapConfig.lowerBlurStrength = nextUiScreen.lowerBlurStrength;
                             wrapConfig.lowerCanvasBlurConfig = nextUiScreen.lowerCanvasBlurConfig;
+                        }
+                        else
+                        {
+                            wrapConfig.lowerBlurStrength = 1;
+                            wrapConfig.lowerCanvasBlurConfig = null;
                         }
                     }
                 }
             }
             // setup others
-            for (var i = 0; i < wrapCanvasConfigs.Count; i++)
+            for (var i = 0; i < _wrapCanvasConfigs.Count; i++)
             {
-                var featureLayerConfig = featureLayerConfigs[i];
-                var wrapConfig = wrapCanvasConfigs[i];
+                var featureLayerConfig = _featureLayerConfigs[i];
+                var nextFeatureLayerConfig = _featureLayerConfigs[Mathf.Min(i + 1, _featureLayerConfigs.Count - 1)];
+                var wrapConfig = _wrapCanvasConfigs[i];
                 var canvasConfig = wrapConfig.canvasConfig;
                 // RenderTexture
-                var nextConfig = i+1< wrapCanvasConfigs.Count ? wrapCanvasConfigs[i+1] : null;
+                var nextConfig = i+1< _wrapCanvasConfigs.Count ? _wrapCanvasConfigs[i+1] : null;
                 var nextLayerHasLiquidGlass = nextConfig != null && nextConfig.canvasConfig.hasLiquidGlass;
                 var changeRt = i == 0 || canvasConfig.hasLiquidGlass;
                 if (changeRt) _rtIndex++;
@@ -108,15 +137,18 @@ namespace UICaptureCompose.UIScreen
                     featureLayerConfig.blurMip = lowBlurConfig.blurMip;
                     featureLayerConfig.gaussianSigma = lowBlurConfig.gaussianSigma;
                     featureLayerConfig.iteration = lowBlurConfig.iteration;
+                    featureLayerConfig.blurStrength = wrapConfig.lowerBlurStrength;
                 }
 
                 // global blur (next layer has LiquidGlass)
                 if (nextLayerHasLiquidGlass)
                 {
-                    featureLayerConfig.globalBlurAlgorithm =
-                        GlobalBlurAlgorithm.GaussianSeparable | GlobalBlurAlgorithm.MipChain;
-                    featureLayerConfig.globalGaussianSigma = GlobalBlurSigma;
-                    featureLayerConfig.globalIteration = GlobalBlurIteration;
+                    // According to next layer liquid glasses, calculate global blur config
+                    var nextBlurConfig = GetNextLayerLiquidGlassBlurConfig(nextConfig.canvasConfig.canvas.gameObject,
+                        nextFeatureLayerConfig.layer);
+                    featureLayerConfig.globalBlurAlgorithm = nextBlurConfig.globalBlurAlgorithm;
+                    featureLayerConfig.globalGaussianSigma = nextBlurConfig.globalGaussianSigma;
+                    featureLayerConfig.globalIteration = nextBlurConfig.globalIteration;
                 }
                 else
                 {
@@ -126,9 +158,47 @@ namespace UICaptureCompose.UIScreen
                 SetupLiquidGlass(canvasConfig.canvas.transform, featureLayerConfig.layer, "UI_BG_" + (_rtIndex - 1));
             }
             // Update renderer feature configs
-            UICaptureEffectManager.Instance.SetupLayerConfigs(featureLayerConfigs);
+            UICaptureEffectManager.Instance.SetupLayerConfigs(_featureLayerConfigs);
             // Update replace feature's rt name
             UICaptureEffectManager.Instance.SetReplaceRtName("UI_BG_" + _rtIndex);
+        }
+
+        private int CompareHierarchy(UIScreen x, UIScreen y)
+        {
+            if (!x || !y)
+                return 0;
+            if (x.transform.IsChildOf(y.transform) )
+                return 1;
+
+            if (y.transform.IsChildOf(x.transform))
+                return -1;
+            if (y.transform.parent == x.transform.parent)
+            {
+                var val1 = x.transform.GetSiblingIndex();
+                var val2 = y.transform.GetSiblingIndex();
+                return val1 - val2;
+            }
+
+            return 0;
+        }
+
+        private GlobalBlurConfig GetNextLayerLiquidGlassBlurConfig(GameObject canvasGameObject, LayerMask layer)
+        {
+            var result = new GlobalBlurConfig();
+            var liquidGlasses = canvasGameObject.GetComponentsInChildren<LiquidGlassUIEffect>(true);
+            foreach (var liquidGlass in liquidGlasses)
+            {
+                if ((1 << liquidGlass.gameObject.layer & layer) > 0)
+                {
+                    if (liquidGlass.blurAlgorithm == BlurEffectType.GaussianBlur)
+                        result.globalBlurAlgorithm |= GlobalBlurAlgorithm.GaussianSeparable;
+                    if (liquidGlass.blurAlgorithm == BlurEffectType.MipMapChain)
+                        result.globalBlurAlgorithm |= GlobalBlurAlgorithm.MipChain;
+                    if (liquidGlass.blurAlgorithm == BlurEffectType.GaussianBlur && liquidGlass.gaussianSigma > result.globalGaussianSigma)
+                        result.globalGaussianSigma = liquidGlass.gaussianSigma;
+                }
+            }
+            return result;
         }
 
         private void SetupLiquidGlass(Transform canvasTransform, LayerMask layer, string rtName)
@@ -142,12 +212,20 @@ namespace UICaptureCompose.UIScreen
                 }
             }
         }
+        
+        private class GlobalBlurConfig
+        {
+            public GlobalBlurAlgorithm globalBlurAlgorithm;
+            public float globalGaussianSigma;
+            public int globalIteration = 1;
+        }
 
+        List<int> _layers = new ();
         private bool TryInitLayerConfigs(UIScreen uiScreen, List<UICaptureComposePerLayerFeature.LayerConfig> configs, 
             ref int beginLayer)
         {
             var result = true;
-            var layers = new List<int>();
+            _layers.Clear();
             for (var i = 0; i < uiScreen.canvasConfigs.Count; i++)
             {
                 var canvasConfig = uiScreen.canvasConfigs[i];
@@ -161,18 +239,16 @@ namespace UICaptureCompose.UIScreen
                 // recursive set gameObject layer
                 var layerMask = 1 << layerIndex;
                 // featureLayerConfig's layer and isForeground
-                var featureLayerConfig = new UICaptureComposePerLayerFeature.LayerConfig()
-                {
-                    layer = layerMask,
-                    isForeground = canvasConfig.isForeground, 
-                };
+                var featureLayerConfig = GetOrCreateFeatureLayerConfig();
+                featureLayerConfig.layer = layerMask;
+                featureLayerConfig.isForeground = canvasConfig.isForeground;
                 configs.Add(featureLayerConfig);
-                layers.Add(layerIndex);
+                _layers.Add(layerIndex);
             }
             for (var i = uiScreen.canvasConfigs.Count - 1; i >= 0; i--)
             {
                 var canvasConfig = uiScreen.canvasConfigs[i];
-                SetLayers(canvasConfig.canvas.gameObject, layers[i]);
+                SetLayers(canvasConfig.canvas.gameObject, _layers[i]);
             }
             // update begin layer index
             beginLayer += uiScreen.canvasConfigs.Count; 
@@ -217,6 +293,65 @@ namespace UICaptureCompose.UIScreen
                 _screens[replaceIndex] = screenConfig;
             }
         }
+
+        public void RemoveUIScreen(UIScreen uiScreen)
+        {
+            _screens.Remove(uiScreen);
+        }
+
+        #region Config Pool
+
+        private void ClearFeatureLayerConfigs(List<UICaptureComposePerLayerFeature.LayerConfig> featureLayerConfigList)
+        {
+            for (var i = 0; i < featureLayerConfigList.Count; i++)
+            {
+                _featureLayerConfigPool.Add(featureLayerConfigList[i]);
+            }
+            featureLayerConfigList.Clear();
+        }
+
+        private void ClearWrapCanvasConfigs(List<WrapCanvasConfig> wrapCanvasConfigs)
+        {
+            for (var i = 0; i < wrapCanvasConfigs.Count; i++)
+            {
+                _wrapCanvasConfigPool.Add(wrapCanvasConfigs[i]);
+            }
+            wrapCanvasConfigs.Clear();
+        }
+
+        private WrapCanvasConfig GetOrCreateWrapCanvasConfig()
+        {
+            WrapCanvasConfig result;
+            if (_wrapCanvasConfigPool.Count > 0)
+            {
+                result = _wrapCanvasConfigPool[0];
+                result.Reset();
+                _wrapCanvasConfigPool.RemoveAt(0);
+            }
+            else
+            {
+                result = new WrapCanvasConfig();
+            }
+
+            return result;
+        }
         
+        private UICaptureComposePerLayerFeature.LayerConfig GetOrCreateFeatureLayerConfig()
+        {
+            UICaptureComposePerLayerFeature.LayerConfig result;
+            if (_featureLayerConfigPool.Count > 0)
+            {
+                result = _featureLayerConfigPool[0];
+                _featureLayerConfigPool.RemoveAt(0);
+            }
+            else
+            {
+                result = new UICaptureComposePerLayerFeature.LayerConfig();
+            }
+
+            return result;
+        }
+
+        #endregion
     }
 }

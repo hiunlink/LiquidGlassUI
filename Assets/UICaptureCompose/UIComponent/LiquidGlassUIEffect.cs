@@ -33,8 +33,9 @@ namespace UICaptureCompose.UIComponent
         [Tooltip("Border width in pixels (inner shrink; 0 = no border")]
         public float borderWidthPx = 4f;
 
-        [Header("Blur")] public BlurEffectType blurAlgorithm = BlurEffectType.MipMapChain;
+        [Header("Blur")] public BlurEffectType blurAlgorithm = BlurEffectType.GaussianBlur;
         [Range(0, 8)] public float mipMapLod = 1.4f;
+        [Range(0, 6)] public float gaussianSigma = 4; 
 
         [Header("Refraction")] public float refractionEdgeWidth = 35f;
         public float refractionMagnitude = 100f;
@@ -219,7 +220,7 @@ namespace UICaptureCompose.UIComponent
             _bgRT = UICaptureEffectManager.Instance?.GetRenderTexture(backgroundRTName);
             _blurRT = UICaptureEffectManager.Instance?.GetBlurRenderTexture(backgroundRTName);
             KW_WITHOUT_BG = new LocalKeyword(mat.shader, "WITHOUT_UI_BG");
-            if (!_bgRT || !_blurRT)
+            if (!_bgRT || !_blurRT || blurAlgorithm == BlurEffectType.None)
             {
                 mat.EnableKeyword(KW_WITHOUT_BG);
             }
@@ -229,7 +230,6 @@ namespace UICaptureCompose.UIComponent
                 mat.SetTexture(ID_UI_BG, _bgRT);
                 mat.SetTexture(ID_UI_BG_BLUR, _blurRT);
             }
-
 
             // Push to material
             mat.SetVector(ID_HalfSize, halfSize);

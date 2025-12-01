@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using UICaptureCompose.UIComponent;
 using UICaptureCompose.URP;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using UnityEngine;
 
 namespace UICaptureCompose.UIScreen
@@ -20,6 +23,7 @@ namespace UICaptureCompose.UIScreen
         [Range(1, 5)] public int iteration = 1;
     }
     
+    [ExecuteInEditMode]
     public class UIScreen: MonoBehaviour
     {
         [System.Serializable]
@@ -38,12 +42,11 @@ namespace UICaptureCompose.UIScreen
             [ShowIf("blur")] 
             public CanvasBlurConfig blurConfig;
         }
-        [Header("底层模糊效果（0代表不做底层模糊）")]
-        [Range(0, 1)] 
-        public int prevLayer = 1;
+        [Header("是否开启底层模糊效果")]
+        public bool lowerBlur = true;
         [Range(0, 1)]
         public float lowerBlurStrength = 1;
-        [ShowIf("prevLayer", 1)]
+        [ShowIf("lowerBlur")]
         public CanvasBlurConfig lowerCanvasBlurConfig;
         [Header("子画布配置")]
         public List<CanvasConfig> canvasConfigs;
@@ -52,11 +55,54 @@ namespace UICaptureCompose.UIScreen
 
         private int _gid;
         public int Gid => _gid;
+
+#if UNITY_EDITOR
+        private static bool _isExitingPlayMode = false;
+        private static bool _isExitingEditorMode = true;
+
+        static UIScreen()
+        {
+            // 监听编辑器 playmode 切换
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+        }
+
+        private static void OnPlayModeStateChanged(PlayModeStateChange state)
+        {
+            // 正在从 PlayMode 回编辑器模式
+            if (state == PlayModeStateChange.ExitingPlayMode)
+                _isExitingPlayMode = true;
+            // 完成转换后重置标记
+            if (state == PlayModeStateChange.EnteredEditMode)
+                _isExitingPlayMode = false;
+
+            if (state == PlayModeStateChange.ExitingEditMode)
+                _isExitingEditorMode = true;
+            if (state == PlayModeStateChange.EnteredPlayMode)
+                _isExitingEditorMode = false;
+        }
+#endif
         
-        private void Awake()
+        private void Init()
         {
             _gid = gameObject.GetInstanceID();
             FindLiquidGlassAndUpdateStates();
+            UIScreenManager.Instance.AddUIScreen(this);
+        }
+        
+        private void OnEnable()
+        {
+            Init();
+            UpdateRendererFeature();
+        }
+
+        private void OnDisable()
+        {
+            UIScreenManager.Instance.RemoveUIScreen(this);
+            if (_isExitingPlayMode || _isExitingEditorMode)
+            {
+                return;
+            }
+            UpdateRendererFeature();
         }
 
         private void FindLiquidGlassAndUpdateStates()
@@ -68,13 +114,6 @@ namespace UICaptureCompose.UIScreen
             }
         }
 
-        [ContextMenu("加入到管理器")]
-        private void AddToUIScreenManager()
-        {
-            _gid = gameObject.GetInstanceID();
-            FindLiquidGlassAndUpdateStates();
-            UIScreenManager.Instance.AddUIScreen(this);
-        }
         [ContextMenu("更新渲染管线")]
         private void UpdateRendererFeature()
         {

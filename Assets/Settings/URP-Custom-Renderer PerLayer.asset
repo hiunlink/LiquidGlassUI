@@ -97,10 +97,11 @@ MonoBehaviour:
       blurMip: 0
       gaussianSigma: 3.65
       iteration: 1
+      blurStrength: 1
       globalTextureName: UI_BG_1
       resolutionScale: 1
       globalBlurAlgorithm: 0
-      globalGaussianSigma: 2
+      globalGaussianSigma: 3.58
       globalIteration: 1
     - layer:
         serializedVersion: 2
@@ -112,10 +113,11 @@ MonoBehaviour:
       blurMip: 0
       gaussianSigma: 0
       iteration: 0
+      blurStrength: 0.77
       globalTextureName: UI_BG_1
       resolutionScale: 1
       globalBlurAlgorithm: 0
-      globalGaussianSigma: 2
+      globalGaussianSigma: 4.62
       globalIteration: 1
     - layer:
         serializedVersion: 2
@@ -127,40 +129,43 @@ MonoBehaviour:
       blurMip: 0
       gaussianSigma: 0
       iteration: 0
+      blurStrength: 1
       globalTextureName: UI_BG_1
       resolutionScale: 1
       globalBlurAlgorithm: 3
-      globalGaussianSigma: 5
+      globalGaussianSigma: 3.58
       globalIteration: 1
     - layer:
         serializedVersion: 2
         m_Bits: 512
       isForeground: 1
-      blur: 0
-      blurAlgorithm: 0
-      alphaBlendColor: {r: 0, g: 0, b: 0, a: 0}
-      blurMip: 0
-      gaussianSigma: 0
-      iteration: 0
+      blur: 1
+      blurAlgorithm: 1
+      alphaBlendColor: {r: 0, g: 0, b: 0, a: 0.72156864}
+      blurMip: 4.11
+      gaussianSigma: 4.4
+      iteration: 1
+      blurStrength: 0.77
       globalTextureName: UI_BG_2
       resolutionScale: 1
       globalBlurAlgorithm: 3
-      globalGaussianSigma: 5
+      globalGaussianSigma: 4.62
       globalIteration: 1
     - layer:
         serializedVersion: 2
         m_Bits: 1024
-      isForeground: 1
+      isForeground: 0
       blur: 0
       blurAlgorithm: 0
       alphaBlendColor: {r: 0, g: 0, b: 0, a: 0}
       blurMip: 0
       gaussianSigma: 0
       iteration: 0
+      blurStrength: 0.77
       globalTextureName: UI_BG_3
       resolutionScale: 1
       globalBlurAlgorithm: 0
-      globalGaussianSigma: 2
+      globalGaussianSigma: 4.62
       globalIteration: 1
     injectEvent: 300
 --- !u!114 &6576797754651316054
