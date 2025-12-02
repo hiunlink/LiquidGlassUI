@@ -494,7 +494,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 855365808}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1938411906}
+        m_TargetAssemblyTypeName: RendererFeatureTest, Assembly-CSharp
+        m_MethodName: MarkAllDirty
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &855365808
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -978,7 +990,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 965123219}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
   m_Name: 
@@ -1153,10 +1165,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lowerBlur: 1
-  lowerBlurStrength: 0.976
+  lowerBlurStrength: 1
   lowerCanvasBlurConfig:
     blurAlgorithm: 1
-    alphaBlendColor: {r: 0, g: 0, b: 0, a: 0.90588236}
+    alphaBlendColor: {r: 0, g: 0, b: 0, a: 0.74509805}
     blurMip: 4.11
     gaussianSigma: 4.87
     iteration: 1

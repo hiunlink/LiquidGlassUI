@@ -2,6 +2,7 @@
 using UICaptureCompose.UIComponent;
 using UICaptureCompose.URP;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace UICaptureCompose.UIScreen
 {
@@ -193,13 +194,16 @@ namespace UICaptureCompose.UIScreen
             {
                 _screens[replaceIndex] = screenConfig;
             }
+
+            HandleGraphicRaycasters();
         }
 
         public void RemoveUIScreen(UIScreen uiScreen)
         {
             _screens.Remove(uiScreen);
+            HandleGraphicRaycasters();
         }
-
+        
         public void MarkAllDirty()
         {
             foreach (var featureLayerConfig in _featureLayerConfigs)
@@ -210,6 +214,24 @@ namespace UICaptureCompose.UIScreen
         }
         #endregion
 
+        private void HandleGraphicRaycasters()
+        {
+            //TODO: cache GraphicRaycasters
+            // find top UIScreen 
+            var topIndex = _screens.Count - 1;
+            // enable top GraphicRaycaster
+            // close others
+            foreach (var canvasConfig in _wrapCanvasConfigs)
+            {
+                var grs = canvasConfig.canvasConfig.canvas.GetComponentsInChildren<GraphicRaycaster>(true);
+                for (var i = 0; i < grs.Length; i++)
+                {
+                    var gr = grs[i];
+                    gr.enabled = i == topIndex;
+                }
+            }
+            
+        }
         private int CompareHierarchy(UIScreen x, UIScreen y)
         {
             if (!x || !y)
