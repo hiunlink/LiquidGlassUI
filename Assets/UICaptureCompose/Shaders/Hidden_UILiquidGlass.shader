@@ -217,6 +217,7 @@ Shader "Hidden/UI_LiquidGlass"
 
                 // increase LOD near edge for extra blur feel; 0..(~3)
                 float lodEdge = _RefrMag * 50.0 * cosBoundary * _RefrLODBias;
+                lodEdge = min(lodEdge, 3);
 
                 float r = SampleBlurBG(bgUV + oR, lodEdge).r;
                 float g = SampleBlurBG(bgUV + oG, lodEdge).g;

@@ -294,12 +294,12 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _EdgeDim: 0.0025641024
+    - _EdgeDim: 0.0027777778
     - _Highlight: 1
     - _RefrAberration: 33
-    - _RefrDim: 0.014957263
+    - _RefrDim: 0.016203703
     - _RefrLODBias: 1.06
-    - _RefrMag: 0.042735036
+    - _RefrMag: 0.046296295
     - _UIBG_Lod: 3.04
     - _UseBlurBG: 0
     m_Colors:
@@ -347,12 +347,12 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _EdgeDim: 0.00085470075
+    - _EdgeDim: 0.0009259259
     - _Highlight: 1
     - _RefrAberration: 33
-    - _RefrDim: 0.014957263
-    - _RefrLODBias: 0.86
-    - _RefrMag: 0.042735036
+    - _RefrDim: 0.016203703
+    - _RefrLODBias: 1.25
+    - _RefrMag: 0.046296295
     - _UIBG_Lod: 4.06
     - _UseBlurBG: 0
     m_Colors:
@@ -553,7 +553,7 @@ MonoBehaviour:
   refractionEdgeWidth: 35
   refractionMagnitude: 100
   chromaticAberration: 33
-  refractionLODBias: 0.86
+  refractionLODBias: 1.25
   edgeRimWidth: 2
   rimLight: {r: 1, g: 1, b: 1, a: 0.24705882}
   glassTint: {r: 0, g: 0, b: 0, a: 0}
@@ -620,7 +620,7 @@ MonoBehaviour:
   refractionEdgeWidth: 35
   refractionMagnitude: 100
   chromaticAberration: 33
-  refractionLODBias: 4
+  refractionLODBias: 0
   edgeRimWidth: 1
   rimLight: {r: 1, g: 1, b: 1, a: 0.20392157}
   glassTint: {r: 0.24528301, g: 0.24528301, b: 0.24528301, a: 0.6313726}
@@ -2072,12 +2072,12 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _EdgeDim: 0.00042735037
+    - _EdgeDim: 0.00046296295
     - _Highlight: 0
     - _RefrAberration: 33
-    - _RefrDim: 0.014957263
-    - _RefrLODBias: 4
-    - _RefrMag: 0.042735036
+    - _RefrDim: 0.016203703
+    - _RefrLODBias: 0
+    - _RefrMag: 0.046296295
     - _UIBG_Lod: 3.87
     - _UseBlurBG: 1
     m_Colors:
@@ -2633,12 +2633,12 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _EdgeDim: 0.00042735037
+    - _EdgeDim: 0.00046296295
     - _Highlight: 1
     - _RefrAberration: 33
-    - _RefrDim: 0.014957263
+    - _RefrDim: 0.016203703
     - _RefrLODBias: 0.49
-    - _RefrMag: 0.042735036
+    - _RefrMag: 0.046296295
     - _UIBG_Lod: 3.93
     - _UseBlurBG: 1
     m_Colors:
