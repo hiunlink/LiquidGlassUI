@@ -2,8 +2,10 @@
 using System;
 using UnityEditor;
 using UnityEngine;
+using UICaptureCompose.UIComponent;
+using UICaptureCompose.UIScreen;
 
-namespace UICaptureCompose.UIComponent.Editor
+namespace UICaptureCompose.Editor
 {
     /// <summary>
     /// 提供编辑器侧回调，让渲染管线可以订阅 gaussianSigma 变更事件。
@@ -64,7 +66,9 @@ namespace UICaptureCompose.UIComponent.Editor
                 if (!Mathf.Approximately(oldSigma, newSigma))
                 {
                     // 发事件：交给你的渲染管线去处理具体的刷新
-                    LiquidGlassUIEffectEditorHooks.OnPropertiesChanged?.Invoke(null);
+                    //LiquidGlassUIEffectEditorHooks.OnPropertiesChanged?.Invoke(null);
+                    UIScreenManager.Instance.UpdateRendererFeature();
+                    UIScreenManager.Instance.SetLowerUIScreenDirty(null);
                 }
             }
         }

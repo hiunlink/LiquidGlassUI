@@ -1,0 +1,16 @@
+{
+    "name": "UICaptureCompose.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:f828f57d1df97b344ac715f6f5bf9233"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

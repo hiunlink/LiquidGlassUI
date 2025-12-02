@@ -1,20 +1,21 @@
-﻿using UICaptureCompose.UIComponent.Editor;
+﻿#if UNITY_EDITOR
+using UICaptureCompose.UIScreen;
 using UnityEditor;
 using UnityEngine;
 
-namespace UICaptureCompose.UIScreen.Editor
+namespace UICaptureCompose.Editor
 {
-    [CustomEditor(typeof(UIScreen))]
+    [CustomEditor(typeof(UIScreen.UIScreen))]
     public class UIScreenEditor: UnityEditor.Editor
     {
         private SerializedProperty _blurStrengthProp;
         private SerializedProperty _lowerBlurConfig;
-        private UIScreen _target;
+        private UIScreen.UIScreen _target;
         private void OnEnable()
         {
             _blurStrengthProp = serializedObject.FindProperty("lowerBlurStrength");
             _lowerBlurConfig = serializedObject.FindProperty("lowerCanvasBlurConfig");
-            _target = target as UIScreen;
+            _target = target as UIScreen.UIScreen;
         }
         
         public override void OnInspectorGUI()
@@ -61,9 +62,11 @@ namespace UICaptureCompose.UIScreen.Editor
                     oldBlurColor != newBlurColor)
                 {
                     // 发事件：交给你的渲染管线去处理具体的刷新
-                    LiquidGlassUIEffectEditorHooks.OnPropertiesChanged?.Invoke(_target);
+                    UIScreenManager.Instance.UpdateRendererFeature();
+                    UIScreenManager.Instance.SetLowerUIScreenDirty(_target);
                 }
             }
         }
     }
 }
+#endif

@@ -118,11 +118,11 @@ namespace UICaptureCompose.UIScreen
             var willChange = EditorApplication.isPlayingOrWillChangePlaymode && !Application.isPlaying;
             if (willChange && !_isExitingEditorMode)
                 _isExitingEditorMode = true;
-#endif
             if (_isExitingPlayMode || _isExitingEditorMode)
             {
                 return;
             }
+#endif
             UIScreenManager.Instance.SetLowerUIScreenDirty(this,true);
         }
 

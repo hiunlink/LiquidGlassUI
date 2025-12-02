@@ -57,6 +57,7 @@ namespace UICaptureCompose.UIComponent
         RectTransform _rt;
         Graphic _graphic;
         Canvas _canvas;
+        RectTransform _rootTransform;
 
         private RenderTexture _bgRT;
         private RenderTexture _blurRT;
@@ -155,6 +156,7 @@ namespace UICaptureCompose.UIComponent
             if (!_graphic) _graphic = GetComponent<Graphic>();
             if (!_rt) _rt = GetComponent<RectTransform>();
             if (!_canvas && _graphic) _canvas = _graphic.canvas;
+            if (!_rootTransform)  _rootTransform = _canvas.rootCanvas.transform.GetComponent<RectTransform>();
         }
 
 
@@ -202,12 +204,13 @@ namespace UICaptureCompose.UIComponent
             if (!_rt) _rt = GetComponent<RectTransform>();
             if (!_canvas) _canvas = _graphic.canvas;
             if (!_canvas) return;
+            if (!_rootTransform) return;
 
             var mat = _graphic.materialForRendering; // per-instance instance used by UI
             if (!mat) return;
 
-            var canvasH = Mathf.Max(1f, _canvas.pixelRect.height);
-            var canvasW = Mathf.Max(1f, _canvas.pixelRect.width);
+            var canvasH = Mathf.Max(1f, _rootTransform.rect.height);
+            var canvasW = Mathf.Max(1f, _rootTransform.rect.width);
 
             // Rect in pixels
             var size = _rt.rect.size; // px

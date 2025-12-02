@@ -105,9 +105,7 @@ Shader "Hidden/UI_LiquidGlass"
             
             void ComputeDistanceAndNormal(float2 uv, out float d, out float2 nrm)
             {
-                // remap uv to -0.5~0.5 center space
-                float2 p = uv - 0.5;
-                p.x *= _ScreenParams.x / _ScreenParams.y; // height做基准
+                float2 p = uv;
                 float minHS = min(_RoundedRectHalfSize.x, _RoundedRectHalfSize.y);
                 float rad = min(_RoundedRadius, minHS);
                 float2 q = abs(p) - _RoundedRectHalfSize + rad;
@@ -167,7 +165,11 @@ Shader "Hidden/UI_LiquidGlass"
 
                 // Distance/normal from UI alpha
                 float d; float2 nrm;
-                ComputeDistanceAndNormal(bgUV-_RectUVOffset, d, nrm);
+                // remap uv to -0.5~0.5 center space
+                float2 p = bgUV - 0.5;
+                p -= _RectUVOffset;
+                p.x *= _ScreenParams.x / _ScreenParams.y; // height做基准
+                ComputeDistanceAndNormal(p, d, nrm);
 
                 // Boundary strength near edges
                 float boundary = Lerp01(-_RefrDim, eps, d);

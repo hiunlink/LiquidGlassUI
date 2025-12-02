@@ -2,9 +2,6 @@
 using UICaptureCompose.UIComponent;
 using UICaptureCompose.URP;
 using UnityEngine;
-#if UNITY_EDITOR
-using UICaptureCompose.UIComponent.Editor;
-#endif
 
 namespace UICaptureCompose.UIScreen
 {
@@ -44,18 +41,6 @@ namespace UICaptureCompose.UIScreen
         private readonly List<WrapCanvasConfig> _wrapCanvasConfigPool = new();
         private readonly List<UICaptureComposePerLayerFeature.LayerConfig> _featureLayerConfigs = new();
         private readonly List<WrapCanvasConfig> _wrapCanvasConfigs = new();
-#if UNITY_EDITOR
-        private UIScreenManager()
-        {
-            LiquidGlassUIEffectEditorHooks.OnPropertiesChanged += OnSigmaChanged;
-        }
-
-        private void OnSigmaChanged(UIScreen uiScreen)
-        {
-            UpdateRendererFeature();
-            SetLowerUIScreenDirty(uiScreen);
-        }
-#endif
 
         #region Public
       
@@ -214,7 +199,15 @@ namespace UICaptureCompose.UIScreen
         {
             _screens.Remove(uiScreen);
         }
-        
+
+        public void MarkAllDirty()
+        {
+            foreach (var featureLayerConfig in _featureLayerConfigs)
+            {
+                Debug.Log($"Set {(int)featureLayerConfig.layer} dirty");
+                UICaptureEffectManager.Instance.SetDirty(featureLayerConfig.layer, true);
+            }
+        }
         #endregion
 
         private int CompareHierarchy(UIScreen x, UIScreen y)
@@ -239,6 +232,8 @@ namespace UICaptureCompose.UIScreen
         private void GetNextLayerLiquidGlassBlurConfig(UIScreen.CanvasConfig canvasConfig, LayerMask layer, ref GlobalBlurConfig result)
         {
             var liquidGlasses = canvasConfig.cachedLiquidGlasses;
+            result.globalGaussianSigma = 0;
+            result.globalBlurAlgorithm = GlobalBlurAlgorithm.None;
             foreach (var liquidGlass in liquidGlasses)
             {
                 if ((1 << liquidGlass.gameObject.layer & layer) > 0)
