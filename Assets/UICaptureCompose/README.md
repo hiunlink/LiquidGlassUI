@@ -1,6 +1,23 @@
-﻿# 📘 UICaptureCompose — Liquid Glass UI & Multi-Layer UI Blur System
+﻿<p align="center">
+  <img src="Docs/Images/LiquidGlass_Cover.png" width="820" alt="Liquid Glass UI Pipeline">
+</p>
 
-（项目文档 README.md）
+<h1 align="center">🍏 Liquid Glass UI Pipeline</h1>
+
+<p align="center">
+  高质量多层 UI 捕获、模糊与折射系统<br>
+  <b>Powered by URP + ScriptableRenderFeature + SDF Refraction Shader</b>
+</p>
+
+<p align="center">
+  <a href="#特性">特性</a> •
+  <a href="#用法">用法</a> •
+  <a href="Docs/RenderFlow_Detailed.md">详细渲染流程</a> •
+  <a href="Docs/UIScreenFlow.md">界面状态机</a>
+</p>
+
+---
+# 📘 UICaptureCompose — Liquid Glass UI & Multi-Layer UI Blur System
 
 > 一个用于 Unity URP 的多层 UI 捕获（UI Capture）、多重模糊预渲染（Blur Compositing）与类 iOS-style Liquid Glass UI 特效系统。
 > 支持动态层级 UI Stack、每层 Canvas 独立 RenderTexture、上层 Liquid Glass 再对下层画面实时折射/色散/圆角玻璃化。
