@@ -83,8 +83,6 @@ UICaptureCompose/
 
 ## 1. UICaptureComposePerLayerFeature（URP Renderer Feature）
 
-📄 *文件来源*：
-
 这是整个系统的 **渲染核心**。
 
 ### 它负责：
@@ -123,8 +121,6 @@ UICaptureComposePerLayerFeature.LayerConfig
 
 ## 2. UIScreen（UI 屏幕抽象）
 
-📄 *文件来源*：
-
 每个 UIScreen 表示一个“界面页面”。
 
 ### UIScreen.CanvasConfig:
@@ -145,8 +141,6 @@ UICaptureComposePerLayerFeature.LayerConfig
 ---
 
 ## 3. UIScreenManager（渲染调度器）
-
-📄 *文件来源*：
 
 这是整个系统的中枢大脑。
 
@@ -174,8 +168,6 @@ UI_BG_3 → …
 
 ## 4. LiquidGlassUIEffect（前端 UI 特效组件）
 
-📄 *文件来源*：
-
 这是使用者最直接操作的 UI 效果组件。
 
 ### 自动执行：
@@ -197,8 +189,6 @@ UI_BG_3 → …
 
 ## 5. UICaptureAutoDirty（UI 变化监听器）
 
-📄 *文件来源*：
-
 自动检测 UI Canvas 变化（颜色/位置/布局/RectTransform）
 一旦检测到变化 → 设为 Dirty → 触发该层背景重绘。
 
@@ -206,15 +196,11 @@ UI_BG_3 → …
 
 ## 6. LowerLayerBlurFade（底层模糊渐变）
 
-📄 *文件来源*：
-
 提供 UI 入场 / 对话框弹出时的底层淡入模糊动画。
 
 ---
 
 ## 7. UIScreenEditor & LiquidGlassUIEffectEditor
-
-📄 *文件来源*：
 
 * LiquidGlassUIEffectEditor：
 * UIScreenEditor：

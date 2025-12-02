@@ -1,10 +1,4 @@
-﻿// Assets/Scripts/URP/UICaptureComposePerLayerFeature.cs
-// URP 2022.3+
-// 需要你已有的 ReplaceFeature + Hidden/UIBGCompositeStencilMip.shader（_SourceTex/_Mip）
-// 需要前景 Shader 提供 LightMode = "StencilPrepass" 与 "AlphaOnly" 两个 Pass
-// 在 StencilPrepass 内使用关键字 FG_PREPASS_DRAW_COLOR 控制是否写颜色（否则仅写模板）
-
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -12,6 +6,109 @@ using UnityEngine.Rendering.Universal;
 using TagUtils = UICaptureCompose.URP.UICaptureComposePerLayerTagUtils;
 using PassPool = UICaptureCompose.URP.UICaptureComposePerLayerPassPool;
 
+// ==========================================================
+// UICaptureComposePerLayerFeature
+// Liquid-Glass UI Per-Layer Blur & Capture Pipeline (URP)
+//
+// 目标：
+//   在单个 UI Camera 下，为多层 UI（前景/背景/模糊层）构建一条
+//   “先捕获、再模糊、再按模板合成”的 RenderFeature 管线，最终输出
+//   一个全局背景贴图 _UI_BG，供 LiquidGlass UI Shader 采样使用。
+//   - 支持前景层（大块遮挡，Stencil 优化）
+//   - 支持多层 Blur（MipChain / Gaussian / Hybrid）
+//   - 支持分辨率缩放、HDR/非 HDR
+//   - 支持 Editor 下缓存复用（dirty=false 时直接沿用上帧结果）
+//
+// ----------------------------------------------------------
+// 每帧大致流程（AddRenderPasses → 多个 ScriptableRenderPass）：
+//
+//  0. 入口 / 早退：
+//     - 跳过 SceneView 相机（避免影响编辑器视图）
+//     - 若没有 LayerConfig 或 Feature 未标记 dirty 且已有 _baseCol，
+//       直接设置全局纹理并返回（复用缓存）。
+//
+//  1. RT 初始化：
+//     - 按 cameraTargetDescriptor * resolutionScale 分配：
+//         _baseCol : 主色缓冲 (UI_BG base)
+//         _baseDS  : 深度+Stencil（用于前景遮挡与 NotEqual）
+//         _blurRT  : 模糊阶段工作 RT（可叠加或单层重用）
+//     - 仅在分辨率变化时重新分配。
+//  
+//  2. Clear Pass（OneShot）：
+//     - 清理 _baseCol / _baseDS：背景色 = settings.clearColor
+//     - 清理 _blurRT：颜色 Clear，RT 内不带深度。
+//     - 通过 OneShot ScriptableRenderPass 注入一条 CommandBuffer 完成。
+//
+//  3. Phase S：前景模板预写（Foreground Stencil Prepass）
+//     - 遍历所有 LayerConfig：
+//         if (config.isForeground):
+//           - 使用 DrawWithLightModePass，LightMode="StencilPrepass"
+//           - ShouldDoOpaquePrepass(i, layers, multiLayerMix) 决定：
+//               a) 仅写 Stencil（不画颜色），或
+//               b) Opaque+Stencil（先画颜色+写模板，用于后续 AlphaOnly 优化）
+//           - 目标 RT：color=_baseCol, depthStencil=_baseDS
+//
+//  4. Phase B/F：按层从远到近绘制 + 模糊 + 合成
+//     对每个 LayerConfig[j]：
+//       4.1 预处理 blurRT：
+//           - 若 config.blur && !multiLayerMix：
+//               → OneShot: Clear(_blurRT)      // 单层模糊，不叠加其它层
+//           - 若 config.blur &&  multiLayerMix：
+//               → OneShot: Blit(_baseCol → _blurRT) // 以当前合成结果作为 blur 入口
+//
+//       4.2 绘制该层本身：
+//           - 前景层：RenderForeground(...)
+//               * 若先前 Phase S 已做 Opaque 预画 → 这里只补 AlphaOnly（LightMode="AlphaOnly"）
+//               * 否则 → 完整 DrawDefaultPass（可选 Stencil NotEqual）
+//               * 渲染目标：根据是否 blur，到 _baseCol 或 _blurRT。
+//           - 非前景层（普通 UI 层）：
+//               * DrawDefaultPass：
+//                 - useStencilClip = UseStencilClip(j, layers, multiLayerMix)
+//                 - 若该层不 blur → 画到 _baseCol / _baseDS
+//                 - 若该层 blur    → 画到 _blurRT（depth 通常为 null）
+//                 - Stencil NotEqual 用于裁剪被前景遮挡的区域。
+//
+//       4.3 模糊阶段（仅当 config.blur == true）：
+//           - 根据 config.blurAlgorithm 切换：
+//
+//             (A) BlurAlgorithm.MipChain:
+//                 MipChainBlurPass：
+//                   - 输入：srcRT = _blurRT, baseCol = _baseCol, baseDS = _baseDS
+//                   - 使用 _matMip (Hidden/UIBGCompositeStencilMip)
+//                   - 参数：mipLevel, useStencilClip, stencilVal, overwriteBase
+//                   - 逻辑：在 srcRT 上使用指定 Mip 级别取样模拟模糊，
+//                           再按 Stencil（NotEqual or full）将结果合成回 baseCol。
+//
+//             (B) BlurAlgorithm.GaussianSeparable:
+//                 GaussianWrapperPass → GaussianBlurPass：
+//                   - 输入：src=_blurRT, tmp=_gaussTmp, dst=_gaussDst,
+//                           baseCol=_baseCol, baseDS=_baseDS
+//                   - 使用 _matGauss (Hidden/UIBG_GaussianSeparable H/V) 与
+//                           _matCopy (Hidden/UIBGCompositeCopyStencil)
+//                   - 参数：iteration, sigma, mipClamp, useStencilNotEqual, stencilVal
+//                   - 逻辑：多次 H/V 分离高斯 → ping-pong 写入 dst，
+//                           再用 Copy+Stencil 合成到 baseCol。
+//  
+//  5. Phase M：为最终 baseCol 生成 Mip 链（可供后续 LOD 使用）
+//     - GenMipsPass：
+//         if (settings.generateMips):
+//             cmd.GenerateMips(_baseCol);
+//
+//  6. 输出全局参数：
+//     - Shader.SetGlobalTexture(settings.globalTextureName, _baseCol);
+//     - Shader.SetGlobalVector(\"_UIBG_UVScale\", (w/camWidth, h/camHeight, 0, 0));
+//     - 后续 LiquidGlass Shader 中使用：
+//         _UI_BG, _UIBG_UVScale 做屏幕空间背景采样与折射。
+//
+// ----------------------------------------------------------
+// 重要说明：
+//   - 本 Feature 不负责绘制 LiquidGlass 前景几何体；
+//     它只负责把“下方 UI/世界”捕获+模糊，输出为 _UI_BG。
+//   - LiquidGlassUIEffect.cs 会在 UI 组件上自动为材质设置 SDF/折射参数，
+//     并在 Shader 中使用 _UI_BG 做 RGB 折射、Tint、Rim Light 等效果。
+//   - 通过 _dirty 标志避免每帧重算模糊：UI 静止时可复用缓存，
+//     UICaptureAutoDirty / UIScreenManager 在 UI 变化时调用 SetDirty(true) 即可。
+// ==========================================================
 namespace UICaptureCompose.URP
 {
     // 模糊算法
