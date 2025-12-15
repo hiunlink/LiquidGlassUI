@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a91210097829eb4e90362de4f7075fe, type: 3}
+  m_Name: LiquidGlassSettings
+  m_EditorClassIdentifier: 
+  globalTextureName: _UI_BG
+  uvScaleName: _UIBG_UVScale
+  liquidGlassShader: {fileID: 4800000, guid: 6c289ab28ae893b4dbbf03f860ec36ef, type: 3}
+  liquidGlassMaterialTemplate: {fileID: 2100000, guid: fb54f45c241e7a4469fce31bd65af076,
+    type: 2}
+  mipCompositeMat: {fileID: 2100000, guid: b12a18e8d2e846649bcfb6209315cdae, type: 2}
+  gaussianMat: {fileID: 2100000, guid: 757cea730e8269a4b81e93441a9d3822, type: 2}
+  gaussianCompositeMat: {fileID: 2100000, guid: 183111268488cc1418e32301fb4ddffc,
+    type: 2}
+  replaceMat: {fileID: 2100000, guid: c4ad2cf383ea5e947b82b23c2f7297ea, type: 2}
+  resolutionScale: 1
+  useHDR: 0
+  clearColor: {r: 0, g: 0, b: 0, a: 0}
+  layerStart: 6
+  layerEnd: 11
+  hiddenLayer: 3
