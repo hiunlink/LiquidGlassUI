@@ -69,7 +69,9 @@ namespace Unlink.LiquidGlassUI
 
         public LiquidGlassSettings GetLiquidGlassSettings()
         {
-            return captureFeature?.settings.config;
+            if (captureFeature?.settings != null)
+                return captureFeature?.settings.config;
+            return null;
         }
         
         #endregion

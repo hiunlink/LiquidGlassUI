@@ -528,6 +528,8 @@ namespace Unlink.LiquidGlassUI
 
         public void SetDirty(LayerMask layer, bool dirty)
         {
+            if (settings == null)
+                return;
             foreach (var layerConfig in settings.layers)
             {
                 if (layerConfig.layer == layer)
@@ -539,12 +541,16 @@ namespace Unlink.LiquidGlassUI
         }
         public RenderTexture GetRenderTexture(string textureName)
         {
+            if (_tempRTMap == null)
+                return null;
             if (textureName == null || !_tempRTMap.TryGetValue(textureName, out var textures))
                 return null;
             return textures.BaseCol.rt;
         }
         public RenderTexture GetBlurRenderTexture(string textureName)
         {
+            if (_tempRTMap == null)
+                return null;
             if (!_tempRTMap.TryGetValue(textureName, out var textures))
                 return null;
             return textures.BlurRT.rt;
@@ -552,6 +558,8 @@ namespace Unlink.LiquidGlassUI
 
         public void SetupLayerConfigs(List<LayerConfig> layerConfigs)
         {
+            if (settings == null)
+                return;
             settings.layers = layerConfigs;
         }
 

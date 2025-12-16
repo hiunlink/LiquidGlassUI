@@ -45,7 +45,9 @@ namespace Unlink.LiquidGlassUI
 
         private UIScreenManager()
         {
-            var config = UICaptureEffectManager.Instance.GetLiquidGlassSettings();
+            var config = UICaptureEffectManager.Instance?.GetLiquidGlassSettings();
+            if (config == null)
+                return;
             _startLayer = config.layerStart;
             _endLayer = config.layerEnd;
             _hiddenLayer = config.hiddenLayer;
