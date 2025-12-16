@@ -229,6 +229,8 @@ namespace Unlink.LiquidGlassUI
             // close others
             foreach (var canvasConfig in _wrapCanvasConfigs)
             {
+                if (canvasConfig.canvasConfig.canvas == null)
+                    return;
                 var grs = canvasConfig.canvasConfig.canvas.GetComponentsInChildren<GraphicRaycaster>(true);
                 for (var i = 0; i < grs.Length; i++)
                 {

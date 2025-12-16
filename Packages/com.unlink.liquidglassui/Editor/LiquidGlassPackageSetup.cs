@@ -74,9 +74,13 @@ namespace Unlink.LiquidGlassUI.Editor
             }
 
             // 5) 绑定 Settings 到 Feature
+            //    绑定 replaceMaterial 
             if (userSettings != null)
                 BindSettingsToFeature(captureFeature, userSettings);
-
+            var asset = AssetDatabase.LoadAssetAtPath<LiquidGlassSettings>(UserSettingsPath);
+            if (asset != null && asset.replaceMat != null)
+                BindMatToReplaceFeature(replaceFeature, asset.replaceMat);
+            
             // 6) 确保场景有 Manager，并绑定 captureFeature, replaceFeature
             var mgr = EnsureManagerInScene();
             if (mgr != null)
@@ -92,13 +96,6 @@ namespace Unlink.LiquidGlassUI.Editor
             FinalizeAssets(uiRD);
             
             // 8) 加入 UICaptureSceneFeature 到 SceneViewRenderer
-            var sceneCameras = SceneView.GetAllSceneCameras();
-            if (sceneCameras.Length == 0)
-            {
-                Debug.LogError("[LiquidGlassUI] Failed to find scene camera");
-                return;
-            }
-
             int sceneRendererIndex = GetDefaultRendererIndex(urp);
             var sceneRD = GetRendererDataByIndex(urp, sceneRendererIndex);
             if (sceneRD == null)
@@ -146,12 +143,46 @@ namespace Unlink.LiquidGlassUI.Editor
                 asset = AssetDatabase.LoadAssetAtPath<LiquidGlassSettings>(UserSettingsPath);
                 if (asset != null) return asset;
             }
+            // fallback：绝对路径 File.Copy（更稳定）
+            var srcAbs = ToAbsolutePath(PackageDefaultSettingsPath);
+            var dstAbs = ToAbsolutePath(UserSettingsPath);
+
+            if (File.Exists(srcAbs))
+            {
+                try
+                {
+                    File.Copy(srcAbs, dstAbs, overwrite: true);
+                    // meta 不拷也行，让 Unity 生成新的；如果你要稳定 GUID 才需要拷 meta
+                    AssetDatabase.ImportAsset(UserSettingsPath, ImportAssetOptions.ForceUpdate);
+                    var copied = AssetDatabase.LoadAssetAtPath<LiquidGlassSettings>(UserSettingsPath);
+                    if (copied != null) return copied;
+                }
+                catch (IOException e)
+                {
+                    Debug.LogWarning($"[LiquidGlassUI] File.Copy failed: {e.Message}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[LiquidGlassUI] Source asset not found on disk: {srcAbs}");
+            }
 
             // fallback：没有默认 asset 就直接创建
             asset = ScriptableObject.CreateInstance<LiquidGlassSettings>();
             AssetDatabase.CreateAsset(asset, UserSettingsPath);
             AssetDatabase.ImportAsset(UserSettingsPath);
             return asset;
+        }
+        /// <summary>
+        /// 把 "Assets/.." 或 "Packages/.." 转成磁盘绝对路径
+        /// </summary>
+        private static string ToAbsolutePath(string projectRelativePath)
+        {
+            // Application.dataPath = ".../<Project>/Assets"
+            // Project root = parent of Assets
+            var projectRoot = Directory.GetParent(Application.dataPath).FullName;
+            var abs = Path.GetFullPath(Path.Combine(projectRoot, projectRelativePath));
+            return abs.Replace('\\', '/');
         }
 
         // ---------------------------
@@ -314,6 +345,27 @@ namespace Unlink.LiquidGlassUI.Editor
                              "Please expose serialized field 'settings.config' (recommended) or 'config'.");
         }
 
+        private static void BindMatToReplaceFeature(ScriptableRendererFeature feature, Material mat)
+        {
+            var soF = new SerializedObject(feature);
+
+            // 推荐：feature.settings.replaceMaterial
+            var pSettings = soF.FindProperty("settings");
+            if (pSettings != null)
+            {
+                var pMat = pSettings.FindPropertyRelative("replaceMaterial");
+                if (pMat != null)
+                {
+                    pMat.objectReferenceValue = mat;
+                    soF.ApplyModifiedPropertiesWithoutUndo();
+                    EditorUtility.SetDirty(feature);
+                    return;
+                }
+            }
+            Debug.LogWarning("[LiquidGlassUI] Could not bind replaceMaterial. " +
+                             "Please expose serialized field 'settings.replaceMaterial' (recommended) or 'replaceMaterial'.");
+        }
+
         // ---------------------------
         // Exclude reserved layers from Transparent Layer Mask
         // ---------------------------
@@ -387,6 +439,7 @@ namespace Unlink.LiquidGlassUI.Editor
         }
         private static void BindManagerFeature(UICaptureEffectManager mgr, UIBGReplaceFeature feature)
         {
+            var asset = AssetDatabase.LoadAssetAtPath<LiquidGlassSettings>(UserSettingsPath);
             var soMgr = new SerializedObject(mgr);
             var pCap = soMgr.FindProperty("replaceFeature");
             if (pCap != null)

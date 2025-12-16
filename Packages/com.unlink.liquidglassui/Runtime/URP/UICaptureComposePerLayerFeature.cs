@@ -183,7 +183,7 @@ namespace Unlink.LiquidGlassUI
         public class Settings
         {
             [Header("全局配置")] public LiquidGlassSettings config;
-            [Header("多层模糊叠加")] public bool multiLayerMix;
+            [Header("多层模糊叠加")] public bool multiLayerMix = true;
             
             [Header("按从远到近排序（config[0] 最底层）")]
             public List<LayerConfig> layers;

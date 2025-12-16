@@ -1,19 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-6004984327652938657
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e246a722c7d54ca18ea09186b048e9d1, type: 3}
-  m_Name: UICaptureSceneFeature
-  m_EditorClassIdentifier: 
-  m_Active: 1
-  captureFeature: {fileID: 5512713914229701560}
 --- !u!114 &-1878332245247344467
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -87,8 +73,7 @@ MonoBehaviour:
   - {fileID: -1878332245247344467}
   - {fileID: -934890645098713531}
   - {fileID: 5512713914229701560}
-  - {fileID: -6004984327652938657}
-  m_RendererFeatureMap: adc0de57c6d2eee5452e0e5be99906f3b8bb03ee1818814c0100000000000000
+  m_RendererFeatureMap: adc0de57c6d2eee5452e0e5be99906f3b8bb03ee1818814c
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
