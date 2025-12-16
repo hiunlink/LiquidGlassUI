@@ -55,7 +55,7 @@ namespace Unlink.LiquidGlassUI.Editor
             // 3) 确保用户 Settings.asset
             var userSettings = EnsureUserSettingsAsset();
 
-            // 4) 确保 CaptureFeature 存在（装到 UI RendererData 上）
+            // 4) 确保 CaptureFeature, ReplaceFeature 存在（装到 UI RendererData 上）
             var captureFeature = EnsureRendererFeature<UICaptureComposePerLayerFeature>(
                 uiRD, "UICaptureComposePerLayerFeature");
 
@@ -64,21 +64,57 @@ namespace Unlink.LiquidGlassUI.Editor
                 Debug.LogError("[LiquidGlassUI] Failed to create/find UICaptureComposePerLayerFeature on UI RendererData.");
                 return;
             }
+            var replaceFeature = EnsureRendererFeature<UIBGReplaceFeature>(
+                uiRD, "UIBGReplaceFeature");
+
+            if (replaceFeature == null)
+            {
+                Debug.LogError("[LiquidGlassUI] Failed to create/find UIBGReplaceFeature on UI RendererData.");
+                return;
+            }
 
             // 5) 绑定 Settings 到 Feature
             if (userSettings != null)
                 BindSettingsToFeature(captureFeature, userSettings);
 
-            // 6) 确保场景有 Manager，并绑定 captureFeature
+            // 6) 确保场景有 Manager，并绑定 captureFeature, replaceFeature
             var mgr = EnsureManagerInScene();
             if (mgr != null)
+            {
                 BindManagerFeature(mgr, captureFeature);
+                BindManagerFeature(mgr, replaceFeature);
+            }
 
             // 7) 排除 UI RendererData 的 Transparent Layer Mask（避免默认管线再画一次）
             int reservedMask = BuildReservedMask(userSettings.layerStart, userSettings.layerEnd, userSettings.hiddenLayer);
             bool changed = ExcludeMaskFromTransparent(uiRD, reservedMask, backupKey: BackupKeyPrefix + uiRD.name);
 
             FinalizeAssets(uiRD);
+            
+            // 8) 加入 UICaptureSceneFeature 到 SceneViewRenderer
+            var sceneCameras = SceneView.GetAllSceneCameras();
+            if (sceneCameras.Length == 0)
+            {
+                Debug.LogError("[LiquidGlassUI] Failed to find scene camera");
+                return;
+            }
+
+            int sceneRendererIndex = GetDefaultRendererIndex(urp);
+            var sceneRD = GetRendererDataByIndex(urp, sceneRendererIndex);
+            if (sceneRD == null)
+            {
+                Debug.LogError($"[LiquidGlassUI] RendererData not found for scene camera rendererIndex={sceneRendererIndex}.");
+                return;
+            }
+            var sceneFeature = EnsureRendererFeature<UICaptureSceneFeature>(sceneRD, "UICaptureSceneFeature");
+            if (sceneFeature == null)
+            {
+                Debug.LogError("[LiquidGlassUI] Failed to create/find UICaptureSceneFeature on Scene RendererData.");
+                return;
+            }
+
+            sceneFeature.captureFeature = captureFeature;
+            
 
             Debug.Log(
                 "[LiquidGlassUI] Install completed.\n" +
@@ -155,6 +191,15 @@ namespace Unlink.LiquidGlassUI.Editor
             }
 
             return 0;
+        }
+
+        private static int GetDefaultRendererIndex(UniversalRenderPipelineAsset urp)
+        {
+            var so = new SerializedObject(urp);
+            var p = so.FindProperty("m_DefaultRendererIndex");
+            if (p != null)
+                return p.intValue;
+            return -1;
         }
 
         // ---------------------------
@@ -333,6 +378,17 @@ namespace Unlink.LiquidGlassUI.Editor
         {
             var soMgr = new SerializedObject(mgr);
             var pCap = soMgr.FindProperty("captureFeature");
+            if (pCap != null)
+            {
+                pCap.objectReferenceValue = feature;
+                soMgr.ApplyModifiedPropertiesWithoutUndo();
+                EditorUtility.SetDirty(mgr);
+            }
+        }
+        private static void BindManagerFeature(UICaptureEffectManager mgr, UIBGReplaceFeature feature)
+        {
+            var soMgr = new SerializedObject(mgr);
+            var pCap = soMgr.FindProperty("replaceFeature");
             if (pCap != null)
             {
                 pCap.objectReferenceValue = feature;
