@@ -231,7 +231,10 @@ namespace Unlink.LiquidGlassUI
         readonly List<ScriptableRenderPass> _tempPasses = new();
 
         // 全局名
-        int _gid, _blurGid, _uvScaleId;
+        int _gid, _blurGid, _uvScaleId, _viewportScaleOffsetId;
+        private int _sceneWidthScaleId;
+        CameraData _cameraData;
+        public CameraData cameraData => _cameraData;
         
         public override void Create()
         {
@@ -246,6 +249,8 @@ namespace Unlink.LiquidGlassUI
             _matCopy = settings.config.gaussianCompositeMat ?? new Material(Shader.Find("Hidden/UIBGCompositeCopyStencil"));
             
             _uvScaleId = Shader.PropertyToID("_UIBG_UVScale");
+            _viewportScaleOffsetId = Shader.PropertyToID("_UIBG_ViewportScaleOffset");
+            _sceneWidthScaleId = Shader.PropertyToID("_SceneScale");
         }
         
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData data)
@@ -257,6 +262,10 @@ namespace Unlink.LiquidGlassUI
             {
                 return;
             }
+
+            _cameraData = data.cameraData;
+            Shader.SetGlobalVector(_viewportScaleOffsetId, new Vector4(1, 1, 0, 0));
+            Shader.SetGlobalFloat(_sceneWidthScaleId, 1f);
             if (settings.layers == null || settings.layers.Count == 0) return;
             var layers = settings.layers;
             var evt = settings.injectEvent;

@@ -64,6 +64,8 @@ Shader "Hidden/UI_LiquidGlass"
             float _UIBG_Lod;
             float _UseBlurBG;
             float2 _UIBG_UVScale; // xy
+            float4 _UIBG_ViewportScaleOffset;
+            float  _SceneScale;
             float  _RefrDim, _RefrMag, _RefrAberration;
             float4 _IOR; // xyz = RGB
             float  _EdgeDim;
@@ -86,8 +88,9 @@ Shader "Hidden/UI_LiquidGlass"
                         uv.y = 1.0 - uv.y;
                 #endif
                 o.screenUV = uv * _UIBG_UVScale;            // match _UI_BG scale
-                
-                return o;
+                o.screenUV *= _UIBG_ViewportScaleOffset.xy;
+                o.screenUV += _UIBG_ViewportScaleOffset.zw;
+                return o;   
             }
 
             // Helpers
@@ -168,7 +171,7 @@ Shader "Hidden/UI_LiquidGlass"
                 // remap uv to -0.5~0.5 center space
                 float2 p = bgUV - 0.5;
                 p -= _RectUVOffset;
-                p.x *= _ScreenParams.x / _ScreenParams.y; // height做基准
+                p.x *= _ScreenParams.x / _ScreenParams.y / _SceneScale; // height做基准
                 ComputeDistanceAndNormal(p, d, nrm);
 
                 // Boundary strength near edges

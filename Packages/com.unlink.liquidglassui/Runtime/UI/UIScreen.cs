@@ -149,6 +149,7 @@ namespace Unlink.LiquidGlassUI
         [ContextMenu("更新渲染管线")]
         private void UpdateRendererFeature()
         {
+            FindLiquidGlassAndUpdateStates();
             UIScreenManager.Instance.UpdateRendererFeature(true);
         }
     }

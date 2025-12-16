@@ -191,7 +191,7 @@ MonoBehaviour:
       blurMip: 4.11
       gaussianSigma: 4.87
       iteration: 1
-      blurStrength: 0.539
+      blurStrength: 0
       globalTextureName: UI_BG_2
       resolutionScale: 1
       globalBlurAlgorithm: 3

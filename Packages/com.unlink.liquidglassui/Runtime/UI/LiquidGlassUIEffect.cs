@@ -168,7 +168,7 @@ namespace Unlink.LiquidGlassUI
             if (_graphic == null) _graphic = GetComponent<Graphic>();
 
             // 用 sharedMaterial 检查，不要用 material（会实例化）
-            var shared = _graphic.defaultMaterial;
+            var shared = _graphic.material;
 
             bool needNew =
                 forceRecreateMaterial ||
@@ -211,7 +211,7 @@ namespace Unlink.LiquidGlassUI
 
             var mat = _graphic.materialForRendering; // per-instance instance used by UI
             if (!mat) return;
-
+            
             var canvasH = Mathf.Max(1f, _rootTransform.rect.height);
             var canvasW = Mathf.Max(1f, _rootTransform.rect.width);
 
