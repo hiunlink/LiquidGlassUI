@@ -42,24 +42,124 @@
 
 ---
 
-### 2️⃣ 一键初始化（非常重要）
+## ⚠️ 一键初始化前置条件（重要）
 
-执行菜单：
+在执行 **`Tools > LiquidGlassUI > Install`** 之前，请确保以下条件满足。
+这些条件是为了保证 **UI Capture 与 SceneView 显示互不干扰**，也是本系统设计的一部分。
+
+---
+
+### 1️⃣ 场景中必须存在 UI Camera
+
+* 至少存在一个 **Screen Space – Camera** 的 `Canvas`
+* 该 Canvas 必须正确设置：
+
+  * `Render Mode` = **Screen Space – Camera**
+  * `World Camera` = **UICamera**
+
+📌 Install 菜单会通过 Canvas 自动查找 UI Camera，如果场景中不存在，将无法完成初始化。
+
+---
+
+### 2️⃣ URP Asset 需要配置两个 Renderer
+
+在 **Universal Render Pipeline Asset** 中，需要准备 **两个 Renderer**：
+
+| Renderer             | 用途                                         |
+| -------------------- | ------------------------------------------ |
+| **Default Renderer** | 用于 SceneView / 普通 Camera 显示                |
+| **UI Renderer**      | 专门供 UI Camera 使用，承载 LiquidGlass UI Capture |
+
+> 这是为了避免 UI Capture 影响 SceneView 显示，同时保持编辑器与运行时表现一致。
+
+---
+
+### 3️⃣ 一键 Install 会自动完成的配置
+
+当你执行：
 
 ```
-
 Tools > LiquidGlassUI > Install
-
 ```
 
-这个操作会自动：
+系统会自动：
 
-- 配置 URP（无需手动改 Renderer）
-- 创建必要的 Settings
-- 设置 UI 渲染层级
-- 创建管理对象
+#### ✅ UI Camera Renderer
 
-**只需要执行一次**（可重复执行，不会破坏配置）。
+* 找到 UI Camera 实际使用的 Renderer（反射 `m_RendererIndex`）
+* 在该 Renderer 上：
+
+  * 自动添加 `UICaptureComposePerLayerFeature`
+  * 从 **Transparent Layer Mask** 中剔除 LiquidGlass UI 使用的 Layer
+  * 防止默认管线重复渲染 UI
+
+#### ✅ Default Renderer（SceneView / 普通 Camera）
+
+* **不会**添加 CaptureFeature
+* 保持默认渲染行为
+* 确保 SceneView 正常显示 UI（不被 Capture 逻辑影响）
+
+#### ✅ 场景与配置
+
+* 创建或复用 `UICaptureEffectManager`
+* 创建用户可编辑的 `LiquidGlassSettings.asset`
+* 自动绑定 Settings → Feature → Manager
+
+整个流程是 **幂等的**，可以安全重复执行。
+
+---
+
+### 4️⃣ 为什么需要两个 Renderer？
+
+这是一个**刻意的设计决策**：
+
+* SceneView 使用默认 Renderer
+
+  * 避免 Capture Pass 影响编辑体验
+* UI Camera 使用专用 Renderer
+
+  * 只在运行时对 UI Layer 执行 Capture
+  * 精确控制 Layer Mask 与渲染顺序
+
+📌 如果 UI Camera 和 SceneView 共用同一个 Renderer，会导致：
+
+* SceneView UI 显示异常
+* 重复渲染
+* Debug 与实际效果不一致
+
+---
+
+### ✅ 推荐配置示意
+
+```text
+URP Asset
+ ├── Renderer 0 : DefaultRenderer
+ │    └──（无 LiquidGlass Feature）
+ │
+ └── Renderer 1 : UIRenderer
+      └── UICaptureComposePerLayerFeature
+```
+
+```text
+Camera
+ ├── Main Camera
+ │    └── Renderer = DefaultRenderer
+ │
+ └── UI Camera
+      └── Renderer = UIRenderer
+```
+
+---
+
+### 🚀 完成以上条件后
+
+即可安全执行：
+
+```
+Tools > LiquidGlassUI > Install
+```
+
+并开始使用 Liquid Glass UI 系统。
 
 ---
 
@@ -104,7 +204,7 @@ UIScreen
 
 * **下层 UIScreen：内容展示层**
 * **上层 UIScreen：弹窗 / Glass 层**
-* 上层可选择性地 **模糊下层 UIScreen 的指定 Canvas**
+* 上层可选择性地 **模糊下层 UIScreen **
 
 ---
 

@@ -18,46 +18,185 @@ namespace Unlink.LiquidGlassUI.Editor
             "Packages/com.unlink.liquidglassui/Resources/DefaultSettings/LiquidGlassSettings_Default.asset";
 
         private const string BackupKeyPrefix = "Unlink.LiquidGlassUI.TransparentMaskBackup.";
-
-        [MenuItem("Tools/LiquidGlassUI/Install")]
-        public static void Install()
+        private struct InstallContext
         {
-            // 0) 找 UI Camera（必须先做，因为后面一切都以 UI RendererData 为准）
-            var uiCam = FindUICameraFromCanvas() ?? Camera.main;
+            public UniversalRenderPipelineAsset urp;
+            public Camera uiCam;
+            public UniversalAdditionalCameraData camData;
+            public int uiRendererIndex;
+            public ScriptableRendererData uiRendererData;
+            public ScriptableRendererData defaultRendererData;
+            public LiquidGlassSettings settings;
+        }
+
+        private static bool ValidateAndRepairBeforeInstall(out InstallContext ctx)
+        {
+            ctx = default;
+
+            // A) 找 UICamera（从 ScreenSpace-Camera Canvas 来）
+            var uiCam = FindUICameraFromCanvas();
             if (uiCam == null)
             {
-                Debug.LogError("[LiquidGlassUI] UI Camera not found. Please set Canvas(RenderMode=ScreenSpace-Camera).worldCamera.");
-                return;
-            }
-            if (!uiCam.TryGetComponent(out UniversalAdditionalCameraData camData))
-            {
-                Debug.LogError($"[LiquidGlassUI] Camera '{uiCam.name}' has no UniversalAdditionalCameraData.");
-                return;
+                EditorUtility.DisplayDialog(
+                    "LiquidGlassUI Install",
+                    "未找到 UI Camera。\n\n请确保场景中至少有一个 Canvas：\n- Render Mode = Screen Space - Camera\n- World Camera 指向 UICamera",
+                    "OK"
+                );
+                return false;
             }
 
-            // 1) URP Asset
+            // B) UICamera 必须有 UniversalAdditionalCameraData
+            if (!uiCam.TryGetComponent(out UniversalAdditionalCameraData camData))
+            {
+                EditorUtility.DisplayDialog(
+                    "LiquidGlassUI Install",
+                    $"Camera '{uiCam.name}' 缺少 UniversalAdditionalCameraData。\n\n请确认该 Camera 使用 URP，并已添加 Universal Additional Camera Data 组件。",
+                    "OK"
+                );
+                Selection.activeObject = uiCam.gameObject;
+                EditorGUIUtility.PingObject(uiCam.gameObject);
+                return false;
+            }
+
+            // C) URP asset 必须存在
             var urp = UniversalRenderPipeline.asset;
             if (urp == null)
             {
-                Debug.LogError("[LiquidGlassUI] URP Asset not found. Check Project Settings > Graphics.");
-                return;
+                EditorUtility.DisplayDialog(
+                    "LiquidGlassUI Install",
+                    "未找到 UniversalRenderPipeline.asset。\n\n请到 Project Settings > Graphics / Quality 设置 URP Asset。",
+                    "OK"
+                );
+                return false;
             }
 
-            // 2) UI Camera 使用的 RendererData（反射 m_RendererIndex）
-            int uiRendererIndex = GetRendererIndex(camData);
-            var uiRD = GetRendererDataByIndex(urp, uiRendererIndex);
-            if (uiRD == null)
+            // D) 读取 renderer list，检查是否至少 2 个
+            int rendererCount = GetRendererCount(urp);
+            if (rendererCount < 2)
             {
-                Debug.LogError($"[LiquidGlassUI] RendererData not found for UI camera rendererIndex={uiRendererIndex}.");
-                return;
+                EditorUtility.DisplayDialog(
+                    "LiquidGlassUI Install",
+                    "URP Asset 需要至少配置两个 Renderer。\n\n建议：\n- Renderer 0：DefaultRenderer（用于 Main/SceneView）\n- Renderer 1：UIRenderer（供 UICamera 使用）\n\n请在 URP Asset 的 Renderer List 中新增一个 RendererData。",
+                    "OK"
+                );
+
+                Selection.activeObject = urp;
+                EditorGUIUtility.PingObject(urp);
+                return false;
             }
 
-            // 3) 确保用户 Settings.asset
-            var userSettings = EnsureUserSettingsAsset();
+            // E) 读取 UICamera 的 rendererIndex（反射 m_RendererIndex）
+            int uiRendererIndex = GetRendererIndex(camData);
+            if (uiRendererIndex < 0 || uiRendererIndex >= rendererCount)
+            {
+                EditorUtility.DisplayDialog(
+                    "LiquidGlassUI Install",
+                    $"UICamera 的 Renderer Index = {uiRendererIndex} 不合法（Renderer 总数 = {rendererCount}）。\n\n请在 UICamera 的 UniversalAdditionalCameraData 中选择正确的 Renderer。",
+                    "OK"
+                );
+                Selection.activeObject = uiCam.gameObject;
+                EditorGUIUtility.PingObject(uiCam.gameObject);
+                return false;
+            }
 
-            // 4) 确保 CaptureFeature, ReplaceFeature 存在（装到 UI RendererData 上）
+            // F) 拿到 Default / UI RendererData
+            int sceneRendererIndex = GetDefaultRendererIndex(urp);
+            var defaultRD = GetRendererDataByIndex(urp, sceneRendererIndex);
+            var uiRD = GetRendererDataByIndex(urp, uiRendererIndex);
+
+            if (defaultRD == null || uiRD == null)
+            {
+                EditorUtility.DisplayDialog(
+                    "LiquidGlassUI Install",
+                    "无法从 URP Asset 解析 RendererData。\n\n可能原因：URP 版本差异或 RendererDataList 为空。",
+                    "OK"
+                );
+                return false;
+            }
+
+            // G) 建议：UIRenderer != DefaultRenderer（给 Warning，不阻断）
+            if (uiRendererIndex == 0)
+            {
+                bool proceed = EditorUtility.DisplayDialog(
+                    "LiquidGlassUI Install",
+                    "检测到 UICamera 正在使用 Renderer 0（Default Renderer）。\n\n建议：UICamera 使用独立的 UIRenderer（例如 Renderer 1），以避免 SceneView/普通相机受到 CaptureFeature 影响。\n\n是否仍要继续安装（将把 CaptureFeature 安装在 Renderer 0 上）？",
+                    "继续安装",
+                    "取消"
+                );
+
+                if (!proceed) return false;
+            }
+
+            // H) 确保 Settings（可自动修）
+            var settings = EnsureUserSettingsAsset();
+            if (settings == null)
+            {
+                EditorUtility.DisplayDialog(
+                    "LiquidGlassUI Install",
+                    "无法创建/加载 LiquidGlassSettings.asset。",
+                    "OK"
+                );
+                return false;
+            }
+
+            // I) 自动修：把保留层从 UI Renderer 的 Transparent Mask 剔除
+            int reservedMask = BuildReservedMask(settings.layerStart, settings.layerEnd, settings.hiddenLayer);
+            bool maskChanged = ExcludeMaskFromTransparent(uiRD, reservedMask, backupKey: BackupKeyPrefix + uiRD.name);
+
+            // J) 建议检查：默认 Renderer 上是否已经装了 CaptureFeature（提示，不自动删）
+            var wrong = FindRendererFeature<UICaptureComposePerLayerFeature>(defaultRD);
+            if (wrong != null && uiRD != defaultRD)
+            {
+                Debug.LogWarning("[LiquidGlassUI] 检测到 DefaultRenderer 上存在 UICaptureComposePerLayerFeature。建议移除，避免 SceneView/普通相机被影响。");
+            }
+
+            if (maskChanged)
+                Debug.Log("[LiquidGlassUI] 已自动更新 UI Renderer Transparent Layer Mask（剔除保留 UI Layers）。");
+
+            ctx = new InstallContext
+            {
+                urp = urp,
+                uiCam = uiCam,
+                camData = camData,
+                uiRendererIndex = uiRendererIndex,
+                uiRendererData = uiRD,
+                defaultRendererData = defaultRD,
+                settings = settings
+            };
+            return true;
+        }
+
+        private static int GetRendererCount(UniversalRenderPipelineAsset urp)
+        {
+            var so = new SerializedObject(urp);
+
+            var pList = so.FindProperty("m_RendererDataList");
+            if (pList != null && pList.isArray)
+                return pList.arraySize;
+
+            // 旧版单 renderer
+            var pSingle = so.FindProperty("m_RendererData");
+            return pSingle != null && pSingle.objectReferenceValue != null ? 1 : 0;
+        }
+        
+        [MenuItem("Tools/LiquidGlassUI/Validate")]
+        public static void Validate()
+        {
+            if (ValidateAndRepairBeforeInstall(out _))
+                EditorUtility.DisplayDialog("LiquidGlassUI Validate", "检查通过 ✅", "OK");
+        }
+    
+        [MenuItem("Tools/LiquidGlassUI/Install")]
+        public static void Install()
+        {
+            // ctx 已包含：urp、uiCam、camData、uiRendererIndex、uiRendererData、settings 等
+            // 后续安装逻辑都用 ctx.uiRendererData，不要再用 renderer 0
+            if (!ValidateAndRepairBeforeInstall(out var ctx))
+                return;
+            
+            // 确保 CaptureFeature, ReplaceFeature 存在（装到 UI RendererData 上）
             var captureFeature = EnsureRendererFeature<UICaptureComposePerLayerFeature>(
-                uiRD, "UICaptureComposePerLayerFeature");
+                ctx.uiRendererData, "UICaptureComposePerLayerFeature");
 
             if (captureFeature == null)
             {
@@ -65,7 +204,7 @@ namespace Unlink.LiquidGlassUI.Editor
                 return;
             }
             var replaceFeature = EnsureRendererFeature<UIBGReplaceFeature>(
-                uiRD, "UIBGReplaceFeature");
+                ctx.uiRendererData, "UIBGReplaceFeature");
 
             if (replaceFeature == null)
             {
@@ -73,54 +212,44 @@ namespace Unlink.LiquidGlassUI.Editor
                 return;
             }
 
-            // 5) 绑定 Settings 到 Feature
-            //    绑定 replaceMaterial 
-            if (userSettings != null)
-                BindSettingsToFeature(captureFeature, userSettings);
+            // 绑定 Settings 到 Feature
+            // 绑定 replaceMaterial 
+            if (ctx.settings != null)
+                BindSettingsToFeature(captureFeature, ctx.settings);
             var asset = AssetDatabase.LoadAssetAtPath<LiquidGlassSettings>(UserSettingsPath);
             if (asset != null && asset.replaceMat != null)
                 BindMatToReplaceFeature(replaceFeature, asset.replaceMat);
             
-            // 6) 确保场景有 Manager，并绑定 captureFeature, replaceFeature
+            // 确保场景有 Manager，并绑定 captureFeature, replaceFeature
             var mgr = EnsureManagerInScene();
             if (mgr != null)
             {
                 BindManagerFeature(mgr, captureFeature);
                 BindManagerFeature(mgr, replaceFeature);
             }
-
-            // 7) 排除 UI RendererData 的 Transparent Layer Mask（避免默认管线再画一次）
-            int reservedMask = BuildReservedMask(userSettings.layerStart, userSettings.layerEnd, userSettings.hiddenLayer);
-            bool changed = ExcludeMaskFromTransparent(uiRD, reservedMask, backupKey: BackupKeyPrefix + uiRD.name);
-
-            FinalizeAssets(uiRD);
+            FinalizeAssets(ctx.uiRendererData);
             
-            // 8) 加入 UICaptureSceneFeature 到 SceneViewRenderer
-            int sceneRendererIndex = GetDefaultRendererIndex(urp);
-            var sceneRD = GetRendererDataByIndex(urp, sceneRendererIndex);
-            if (sceneRD == null)
+            // 加入 UICaptureSceneFeature 到 SceneViewRenderer
+           if (ctx.defaultRendererData == null)
             {
-                Debug.LogError($"[LiquidGlassUI] RendererData not found for scene camera rendererIndex={sceneRendererIndex}.");
+                Debug.LogError($"[LiquidGlassUI] RendererData not found for scene camera.");
                 return;
             }
-            var sceneFeature = EnsureRendererFeature<UICaptureSceneFeature>(sceneRD, "UICaptureSceneFeature");
+            var sceneFeature = EnsureRendererFeature<UICaptureSceneFeature>(ctx.defaultRendererData, "UICaptureSceneFeature");
             if (sceneFeature == null)
             {
                 Debug.LogError("[LiquidGlassUI] Failed to create/find UICaptureSceneFeature on Scene RendererData.");
                 return;
             }
-
             sceneFeature.captureFeature = captureFeature;
             
-
             Debug.Log(
                 "[LiquidGlassUI] Install completed.\n" +
-                $"- UICamera: {uiCam.name}\n" +
-                $"- UIRendererIndex: {uiRendererIndex}\n" +
-                $"- UIRendererData: {uiRD.name}\n" +
+                $"- UICamera: {ctx.uiCam.name}\n" +
+                $"- UIRendererIndex: {ctx.uiRendererIndex}\n" +
+                $"- UIRendererData: {ctx.uiRendererData.name}\n" +
                 $"- CaptureFeature: {captureFeature.name}\n" +
-                $"- Settings: {(userSettings ? AssetDatabase.GetAssetPath(userSettings) : "(none)")}\n" +
-                $"- TransparentMaskUpdated: {changed}"
+                $"- Settings: {(ctx.settings ? AssetDatabase.GetAssetPath(ctx.settings) : "(none)")}\n"
             );
         }
 
