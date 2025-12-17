@@ -138,7 +138,26 @@ namespace Unlink.LiquidGlassUI.Editor
                 );
                 return false;
             }
+            
+            // ✅ NEW: validate layers exist in TagManager
+            if (!ValidateLayersConfigured(settings, out var layerErrorMsg))
+            {
+                bool autoFix = EditorUtility.DisplayDialog(
+                    "LiquidGlassUI Install",
+                    layerErrorMsg + "\n\n是否自动为这些 Layer 填入默认名称？",
+                    "自动修复",
+                    "取消"
+                );
 
+                if (!autoFix)
+                {
+                    SettingsService.OpenProjectSettings("Project/Tags and Layers");
+                    return false;
+                }
+
+                AutoConfigureLayers(settings);
+            }
+            
             // I) 自动修：把保留层从 UI Renderer 的 Transparent Mask 剔除
             int reservedMask = BuildReservedMask(settings.layerStart, settings.layerEnd, settings.hiddenLayer);
             bool maskChanged = ExcludeMaskFromTransparent(uiRD, reservedMask, backupKey: BackupKeyPrefix + uiRD.name);
@@ -164,6 +183,122 @@ namespace Unlink.LiquidGlassUI.Editor
                 settings = settings
             };
             return true;
+        }
+        
+        private static bool ValidateLayersConfigured(LiquidGlassSettings s, out string msg)
+        {
+            msg = null;
+
+            if (!ValidateLayerRange(s.layerStart, s.layerEnd, s.hiddenLayer, out msg))
+                return false;
+
+            // 收集需要存在的 layer slots
+            var missing = new System.Collections.Generic.List<int>();
+
+            for (int i = s.layerStart; i <= s.layerEnd; i++)
+            {
+                if (!IsUserLayerSlotConfigured(i))
+                    missing.Add(i);
+            }
+
+            if (s.hiddenLayer >= 0 && s.hiddenLayer <= 31)
+            {
+                if (!IsUserLayerSlotConfigured(s.hiddenLayer))
+                    missing.Add(s.hiddenLayer);
+            }
+
+            if (missing.Count > 0)
+            {
+                msg =
+                    "LiquidGlassSettings 中指定的 Layer 尚未在 Project Settings > Tags and Layers 配置完成。\n\n" +
+                    "请先为以下 Layer Index 填写名称（不能留空）：\n" +
+                    $"- {string.Join(", ", missing)}\n\n" +
+                    "建议命名规则：\n" +
+                    $"- UI_BG{missing[0]} ...（按你的项目习惯）\n\n" +
+                    "已为你打开 Tags and Layers 设置页。";
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool ValidateLayerRange(int layerStart, int layerEnd, int hiddenLayer, out string msg)
+        {
+            msg = null;
+
+            if (layerStart < 0 || layerStart > 31 || layerEnd < 0 || layerEnd > 31 || hiddenLayer < 0 || hiddenLayer > 31)
+            {
+                msg =
+                    "LiquidGlassSettings 的 Layer 配置不合法：\n\n" +
+                    $"- layerStart = {layerStart}\n" +
+                    $"- layerEnd   = {layerEnd}\n" +
+                    $"- hiddenLayer= {hiddenLayer}\n\n" +
+                    "Layer 必须在 0..31 范围内。";
+                return false;
+            }
+
+            if (layerEnd < layerStart)
+            {
+                msg =
+                    "LiquidGlassSettings 的 Layer 配置不合法：\n\n" +
+                    $"layerEnd ({layerEnd}) 必须 >= layerStart ({layerStart})。";
+                return false;
+            }
+
+            // 0..7 是 Unity 内建层，建议不要让用户用（给 warning，不阻断也可以）
+            if (layerStart < 8)
+            {
+                Debug.LogWarning("[LiquidGlassUI] layerStart < 8：建议使用用户层（8..31），避免占用 Unity 内建 Layer。");
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Unity 的用户 Layer 名称存于 TagManager 的 layers[8..31]，
+        /// 如果该 slot 为空字符串，说明未配置。
+        /// </summary>
+        private static bool IsUserLayerSlotConfigured(int layerIndex)
+        {
+            // 内建 0..7 我们视为已存在（虽然不建议用）
+            if (layerIndex < 8) return true;
+
+            var so = new UnityEditor.SerializedObject(
+                UnityEditor.AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
+
+            var layersProp = so.FindProperty("layers");
+            if (layersProp == null || !layersProp.isArray) return false;
+
+            if (layerIndex < 0 || layerIndex >= layersProp.arraySize) return false;
+
+            var p = layersProp.GetArrayElementAtIndex(layerIndex);
+            string name = p.stringValue;
+            return !string.IsNullOrEmpty(name);
+        }
+        
+        private static void AutoConfigureLayers(LiquidGlassSettings s)
+        {
+            var obj = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0];
+            var so = new SerializedObject(obj);
+            var layersProp = so.FindProperty("layers");
+
+            void SetLayerName(int idx, string name)
+            {
+                if (idx < 8 || idx >= layersProp.arraySize) return; // 只改用户层
+                var p = layersProp.GetArrayElementAtIndex(idx);
+                if (string.IsNullOrEmpty(p.stringValue))
+                    p.stringValue = name;
+            }
+
+            for (int i = s.layerStart; i <= s.layerEnd; i++)
+                SetLayerName(i, $"UI_BG{i}");
+
+            SetLayerName(s.hiddenLayer, $"UI_Hidden{s.hiddenLayer}");
+
+            so.ApplyModifiedPropertiesWithoutUndo();
+            AssetDatabase.SaveAssets();
+
+            Debug.Log("[LiquidGlassUI] 已自动配置 Tags and Layers（填入默认 Layer 名称）。");
         }
 
         private static int GetRendererCount(UniversalRenderPipelineAsset urp)
