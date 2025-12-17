@@ -112,6 +112,9 @@ namespace Unlink.LiquidGlassUI
             UIScreenManager.Instance.RemoveUIScreen(this);
 
 #if UNITY_EDITOR
+            // Scene 被卸载导致的 OnDisable
+            if (!gameObject.scene.isLoaded)
+                return;
             var willChange = EditorApplication.isPlayingOrWillChangePlaymode && !Application.isPlaying;
             if (willChange && !_isExitingEditorMode)
                 _isExitingEditorMode = true;

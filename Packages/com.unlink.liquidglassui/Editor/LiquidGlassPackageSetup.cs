@@ -377,6 +377,7 @@ namespace Unlink.LiquidGlassUI.Editor
                 return;
             }
             sceneFeature.captureFeature = captureFeature;
+            FinalizeAssets(ctx.defaultRendererData);
             
             Debug.Log(
                 "[LiquidGlassUI] Install completed.\n" +

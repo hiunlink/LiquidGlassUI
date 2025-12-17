@@ -22,7 +22,7 @@ namespace Unlink.LiquidGlassUI
                     if (!_logged)
                     {
                         Debug.LogError(
-                            @"Please create UICaptureEffectManager by menu ""Tools/LiquidGlassUI/Install UICapture Manager""");
+                            @"Please create UICaptureEffectManager by menu ""Tools/LiquidGlassUI/Install""");
                         _logged = true;
                     }
                 }
