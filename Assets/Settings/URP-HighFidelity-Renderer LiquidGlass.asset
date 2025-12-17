@@ -130,7 +130,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Active: 1
   settings:
-    config: {fileID: 11400000, guid: 8a2f66ea0f89e444dbb406c0010c3e1c, type: 2}
+    config: {fileID: 11400000, guid: ff17e78799f9fbc448e143743e3102e4, type: 2}
     multiLayerMix: 1
     layers:
     - layer:
