@@ -25,5 +25,6 @@ MonoBehaviour:
   resolutionScale: 1
   useHDR: 0
   clearColor: {r: 0, g: 0, b: 0, a: 0}
-  layerStart: 6
-  layerEnd: 31
+  layerStart: 8
+  layerEnd: 12
+  hiddenLayer: 31

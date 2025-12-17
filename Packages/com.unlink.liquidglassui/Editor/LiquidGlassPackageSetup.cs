@@ -115,7 +115,7 @@ namespace Unlink.LiquidGlassUI.Editor
             }
 
             // G) 建议：UIRenderer != DefaultRenderer（给 Warning，不阻断）
-            if (uiRendererIndex == 0)
+            if (uiRendererIndex == sceneRendererIndex)
             {
                 bool proceed = EditorUtility.DisplayDialog(
                     "LiquidGlassUI Install",

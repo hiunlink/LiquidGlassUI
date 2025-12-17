@@ -35,24 +35,6 @@ MonoBehaviour:
   - {fileID: 2800000, guid: 3302065f671a8450b82c9ddf07426f3a, type: 3}
   - {fileID: 2800000, guid: 56a77a3e8d64f47b6afe9e3c95cb57d5, type: 3}
   m_Shader: {fileID: 4800000, guid: 0849e84e3d62649e8882e9d6f056a017, type: 3}
---- !u!114 &-934890645098713531
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b0f49dcb553c465ab6dfac2c4d57177b, type: 3}
-  m_Name: UIBGReplaceFeature
-  m_EditorClassIdentifier: 
-  m_Active: 1
-  settings:
-    globalTextureName: UI_BG_3
-    injectEvent: 450
-    replaceMaterial: {fileID: 2100000, guid: c4ad2cf383ea5e947b82b23c2f7297ea, type: 2}
-    cameraTagFilter: MainCamera
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -71,9 +53,9 @@ MonoBehaviour:
     hdrDebugViewPS: {fileID: 4800000, guid: 573620ae32aec764abd4d728906d2587, type: 3}
   m_RendererFeatures:
   - {fileID: -1878332245247344467}
-  - {fileID: -934890645098713531}
-  - {fileID: 5512713914229701560}
-  m_RendererFeatureMap: adc0de57c6d2eee5452e0e5be99906f3b8bb03ee1818814c
+  - {fileID: 6339532177790813715}
+  - {fileID: 6923358652135059039}
+  m_RendererFeatureMap: adc0de57c6d2eee501000000000000000100000000000000
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
@@ -116,7 +98,7 @@ MonoBehaviour:
   m_CopyDepthMode: 0
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 1
---- !u!114 &5512713914229701560
+--- !u!114 &6339532177790813715
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -135,7 +117,7 @@ MonoBehaviour:
     layers:
     - layer:
         serializedVersion: 2
-        m_Bits: 64
+        m_Bits: 256
       isForeground: 0
       blur: 1
       blurAlgorithm: 1
@@ -151,7 +133,7 @@ MonoBehaviour:
       globalIteration: 1
     - layer:
         serializedVersion: 2
-        m_Bits: 128
+        m_Bits: 512
       isForeground: 1
       blur: 0
       blurAlgorithm: 0
@@ -167,7 +149,7 @@ MonoBehaviour:
       globalIteration: 1
     - layer:
         serializedVersion: 2
-        m_Bits: 256
+        m_Bits: 1024
       isForeground: 0
       blur: 0
       blurAlgorithm: 0
@@ -183,7 +165,7 @@ MonoBehaviour:
       globalIteration: 1
     - layer:
         serializedVersion: 2
-        m_Bits: 512
+        m_Bits: 2048
       isForeground: 1
       blur: 1
       blurAlgorithm: 1
@@ -199,7 +181,7 @@ MonoBehaviour:
       globalIteration: 1
     - layer:
         serializedVersion: 2
-        m_Bits: 1024
+        m_Bits: 4096
       isForeground: 0
       blur: 0
       blurAlgorithm: 0
@@ -214,3 +196,21 @@ MonoBehaviour:
       globalGaussianSigma: 2
       globalIteration: 1
     injectEvent: 300
+--- !u!114 &6923358652135059039
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b0f49dcb553c465ab6dfac2c4d57177b, type: 3}
+  m_Name: UIBGReplaceFeature
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  settings:
+    globalTextureName: UI_BG_3
+    injectEvent: 450
+    replaceMaterial: {fileID: 2100000, guid: c4ad2cf383ea5e947b82b23c2f7297ea, type: 2}
+    cameraTagFilter: MainCamera

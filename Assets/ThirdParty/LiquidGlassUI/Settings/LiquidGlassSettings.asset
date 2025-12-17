@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9a91210097829eb4e90362de4f7075fe, type: 3}
-  m_Name: LiquidGlassSettings_Default
+  m_Name: LiquidGlassSettings
   m_EditorClassIdentifier: 
   globalTextureName: _UI_BG
   uvScaleName: _UIBG_UVScale
@@ -25,5 +25,6 @@ MonoBehaviour:
   resolutionScale: 1
   useHDR: 0
   clearColor: {r: 0, g: 0, b: 0, a: 0}
-  layerStart: 6
-  layerEnd: 31
+  layerStart: 8
+  layerEnd: 12
+  hiddenLayer: 31

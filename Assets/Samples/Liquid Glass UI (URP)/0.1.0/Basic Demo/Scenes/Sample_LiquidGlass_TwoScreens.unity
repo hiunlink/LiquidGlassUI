@@ -134,7 +134,7 @@ GameObject:
   - component: {fileID: 240861573}
   - component: {fileID: 240861575}
   - component: {fileID: 240861574}
-  m_Layer: 10
+  m_Layer: 12
   m_Name: Text (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -360,7 +360,7 @@ Material:
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _DstBlendAlpha: 0
-    - _EdgeDim: 0.00042735043
+    - _EdgeDim: 0.00042735037
     - _EnvironmentReflections: 1
     - _GlossMapScale: 0
     - _Glossiness: 0
@@ -372,9 +372,9 @@ Material:
     - _QueueOffset: 0
     - _ReceiveShadows: 1
     - _RefrAberration: 33
-    - _RefrDim: 0.014957265
+    - _RefrDim: 0.014957263
     - _RefrLODBias: 0
-    - _RefrMag: 0.042735044
+    - _RefrMag: 0.042735036
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
@@ -425,9 +425,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bb0451d0d21b4dc2b69deb671a64d57c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  captureFeature: {fileID: 5512713914229701560, guid: 93797f9538d32d3488e8fced52856e24,
+  captureFeature: {fileID: 6339532177790813715, guid: 93797f9538d32d3488e8fced52856e24,
     type: 2}
-  replaceFeature: {fileID: -934890645098713531, guid: 93797f9538d32d3488e8fced52856e24,
+  replaceFeature: {fileID: 6923358652135059039, guid: 93797f9538d32d3488e8fced52856e24,
     type: 2}
 --- !u!4 &566580531
 Transform:
@@ -457,7 +457,7 @@ GameObject:
   - component: {fileID: 855365808}
   - component: {fileID: 855365807}
   - component: {fileID: 855365810}
-  m_Layer: 9
+  m_Layer: 11
   m_Name: Button (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -619,7 +619,7 @@ GameObject:
   - component: {fileID: 894721303}
   - component: {fileID: 894721302}
   - component: {fileID: 894721301}
-  m_Layer: 9
+  m_Layer: 11
   m_Name: Button (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -767,7 +767,7 @@ GameObject:
   - component: {fileID: 936617962}
   - component: {fileID: 936617964}
   - component: {fileID: 936617963}
-  m_Layer: 9
+  m_Layer: 11
   m_Name: Text (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -902,7 +902,7 @@ GameObject:
   - component: {fileID: 965123221}
   - component: {fileID: 965123222}
   - component: {fileID: 965123224}
-  m_Layer: 9
+  m_Layer: 11
   m_Name: UILayer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1045,7 +1045,7 @@ GameObject:
   - component: {fileID: 1024658029}
   - component: {fileID: 1024658030}
   - component: {fileID: 1024658031}
-  m_Layer: 6
+  m_Layer: 8
   m_Name: BgCanvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1122,7 +1122,7 @@ GameObject:
   - component: {fileID: 1066916486}
   - component: {fileID: 1066916487}
   - component: {fileID: 1066916488}
-  m_Layer: 10
+  m_Layer: 12
   m_Name: UITop
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1240,7 +1240,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1066916482}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
   m_Name: 
@@ -1263,7 +1263,7 @@ GameObject:
   - component: {fileID: 1084968851}
   - component: {fileID: 1084968850}
   - component: {fileID: 1084968849}
-  m_Layer: 10
+  m_Layer: 12
   m_Name: Button (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1425,7 +1425,7 @@ GameObject:
   - component: {fileID: 1094120742}
   - component: {fileID: 1094120741}
   - component: {fileID: 1094120744}
-  m_Layer: 10
+  m_Layer: 12
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1585,7 +1585,7 @@ GameObject:
   - component: {fileID: 1148132113}
   - component: {fileID: 1148132112}
   - component: {fileID: 1148132114}
-  m_Layer: 8
+  m_Layer: 10
   m_Name: HeadImage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1776,7 +1776,7 @@ Material:
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _DstBlendAlpha: 0
-    - _EdgeDim: 0.0025641026
+    - _EdgeDim: 0.0025641024
     - _EnvironmentReflections: 1
     - _GlossMapScale: 0
     - _Glossiness: 0
@@ -1788,9 +1788,9 @@ Material:
     - _QueueOffset: 0
     - _ReceiveShadows: 1
     - _RefrAberration: 33
-    - _RefrDim: 0.014957265
+    - _RefrDim: 0.014957263
     - _RefrLODBias: 0
-    - _RefrMag: 0.042735044
+    - _RefrMag: 0.042735036
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
@@ -1891,7 +1891,7 @@ GameObject:
   - component: {fileID: 1438018644}
   - component: {fileID: 1438018646}
   - component: {fileID: 1438018645}
-  m_Layer: 7
+  m_Layer: 9
   m_Name: ClotheImage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2058,7 +2058,7 @@ Material:
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _DstBlendAlpha: 0
-    - _EdgeDim: 0.00085470086
+    - _EdgeDim: 0.00085470075
     - _EnvironmentReflections: 1
     - _GlossMapScale: 0
     - _Glossiness: 0
@@ -2070,9 +2070,9 @@ Material:
     - _QueueOffset: 0
     - _ReceiveShadows: 1
     - _RefrAberration: 33
-    - _RefrDim: 0.014957265
+    - _RefrDim: 0.014957263
     - _RefrLODBias: 1.25
-    - _RefrMag: 0.042735044
+    - _RefrMag: 0.042735036
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
@@ -2197,7 +2197,7 @@ Material:
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _DstBlendAlpha: 0
-    - _EdgeDim: 0.0025641026
+    - _EdgeDim: 0.0025641024
     - _EnvironmentReflections: 1
     - _GlossMapScale: 0
     - _Glossiness: 0
@@ -2209,9 +2209,9 @@ Material:
     - _QueueOffset: 0
     - _ReceiveShadows: 1
     - _RefrAberration: 33
-    - _RefrDim: 0.014957265
+    - _RefrDim: 0.014957263
     - _RefrLODBias: 1.06
-    - _RefrMag: 0.042735044
+    - _RefrMag: 0.042735036
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
@@ -2244,7 +2244,7 @@ GameObject:
   - component: {fileID: 1500711513}
   - component: {fileID: 1500711515}
   - component: {fileID: 1500711514}
-  m_Layer: 6
+  m_Layer: 8
   m_Name: BgImage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2320,7 +2320,7 @@ GameObject:
   - component: {fileID: 1507112339}
   - component: {fileID: 1507112338}
   - component: {fileID: 1507112337}
-  m_Layer: 8
+  m_Layer: 10
   m_Name: Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2441,7 +2441,7 @@ GameObject:
   - component: {fileID: 1631555960}
   - component: {fileID: 1631555959}
   - component: {fileID: 1631555958}
-  m_Layer: 10
+  m_Layer: 12
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2544,7 +2544,7 @@ GameObject:
   - component: {fileID: 1631823087}
   - component: {fileID: 1631823088}
   - component: {fileID: 1631823089}
-  m_Layer: 7
+  m_Layer: 9
   m_Name: CharacterCanvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2618,7 +2618,7 @@ GameObject:
   - component: {fileID: 1769651053}
   - component: {fileID: 1769651055}
   - component: {fileID: 1769651054}
-  m_Layer: 9
+  m_Layer: 11
   m_Name: Text (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2752,7 +2752,7 @@ GameObject:
   - component: {fileID: 1873718844}
   - component: {fileID: 1873718846}
   - component: {fileID: 1873718845}
-  m_Layer: 8
+  m_Layer: 10
   m_Name: Text (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3219,7 +3219,7 @@ Material:
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _DstBlendAlpha: 0
-    - _EdgeDim: 0.00042735043
+    - _EdgeDim: 0.00042735037
     - _EnvironmentReflections: 1
     - _GlossMapScale: 0
     - _Glossiness: 0
@@ -3231,9 +3231,9 @@ Material:
     - _QueueOffset: 0
     - _ReceiveShadows: 1
     - _RefrAberration: 33
-    - _RefrDim: 0.014957265
+    - _RefrDim: 0.014957263
     - _RefrLODBias: 0.49
-    - _RefrMag: 0.042735044
+    - _RefrMag: 0.042735036
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
