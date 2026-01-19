@@ -119,6 +119,22 @@ MonoBehaviour:
         serializedVersion: 2
         m_Bits: 256
       isForeground: 0
+      blur: 0
+      blurAlgorithm: 0
+      alphaBlendColor: {r: 0, g: 0, b: 0, a: 0}
+      blurMip: 0
+      gaussianSigma: 0
+      iteration: 0
+      blurStrength: 1
+      globalTextureName: UI_BG_1
+      resolutionScale: 1
+      globalBlurAlgorithm: 0
+      globalGaussianSigma: 3.51
+      globalIteration: 1
+    - layer:
+        serializedVersion: 2
+        m_Bits: 512
+      isForeground: 0
       blur: 1
       blurAlgorithm: 1
       alphaBlendColor: {r: 0, g: 0, b: 0, a: 0.5019608}
@@ -129,11 +145,11 @@ MonoBehaviour:
       globalTextureName: UI_BG_1
       resolutionScale: 1
       globalBlurAlgorithm: 0
-      globalGaussianSigma: 2
+      globalGaussianSigma: 2.3
       globalIteration: 1
     - layer:
         serializedVersion: 2
-        m_Bits: 512
+        m_Bits: 1024
       isForeground: 1
       blur: 0
       blurAlgorithm: 0
@@ -145,11 +161,11 @@ MonoBehaviour:
       globalTextureName: UI_BG_1
       resolutionScale: 1
       globalBlurAlgorithm: 0
-      globalGaussianSigma: 2
+      globalGaussianSigma: 3.51
       globalIteration: 1
     - layer:
         serializedVersion: 2
-        m_Bits: 1024
+        m_Bits: 2048
       isForeground: 0
       blur: 0
       blurAlgorithm: 0
@@ -165,32 +181,16 @@ MonoBehaviour:
       globalIteration: 1
     - layer:
         serializedVersion: 2
-        m_Bits: 2048
+        m_Bits: 4096
       isForeground: 1
       blur: 1
-      blurAlgorithm: 1
-      alphaBlendColor: {r: 0, g: 0, b: 0, a: 0.74509805}
-      blurMip: 4.11
-      gaussianSigma: 4.87
-      iteration: 1
-      blurStrength: 0.573
-      globalTextureName: UI_BG_2
-      resolutionScale: 1
-      globalBlurAlgorithm: 3
-      globalGaussianSigma: 2.3
-      globalIteration: 1
-    - layer:
-        serializedVersion: 2
-        m_Bits: 4096
-      isForeground: 0
-      blur: 0
       blurAlgorithm: 0
       alphaBlendColor: {r: 0, g: 0, b: 0, a: 0}
-      blurMip: 0
-      gaussianSigma: 0
-      iteration: 0
+      blurMip: 3
+      gaussianSigma: 2
+      iteration: 1
       blurStrength: 1
-      globalTextureName: UI_BG_3
+      globalTextureName: UI_BG_2
       resolutionScale: 1
       globalBlurAlgorithm: 0
       globalGaussianSigma: 2
@@ -210,7 +210,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Active: 1
   settings:
-    globalTextureName: UI_BG_3
+    globalTextureName: UI_BG_2
     injectEvent: 450
     replaceMaterial: {fileID: 2100000, guid: c4ad2cf383ea5e947b82b23c2f7297ea, type: 2}
     cameraTagFilter: MainCamera
