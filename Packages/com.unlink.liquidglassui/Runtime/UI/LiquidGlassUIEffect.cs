@@ -44,8 +44,8 @@ namespace Unlink.LiquidGlassUI
         [Range(0, 4)] public float refractionLODBias = 1.32f;
 
         [Header("Appears")] public float edgeRimWidth = 6f;
-        public Color rimLight = new Color(1, 1, 1, 0.15f);
-        public Color glassTint = Color.clear;
+        public Color rimLight = new Color(1, 1, 1, 0.5f);
+        public Color glassTint = new Color(0 , 0, 0, 0.3f);
 
         [Header("Material")] public string backgroundRTName = "_UI_BG";
 
@@ -60,6 +60,7 @@ namespace Unlink.LiquidGlassUI
         private Material _instancedMat;
         Canvas _canvas;
         RectTransform _rootTransform;
+        Camera _uiCamera;
 
         private RenderTexture _bgRT;
         private RenderTexture _blurRT;
@@ -159,7 +160,8 @@ namespace Unlink.LiquidGlassUI
             if (!_graphic) _graphic = GetComponent<Graphic>();
             if (!_rt) _rt = GetComponent<RectTransform>();
             if (!_canvas && _graphic) _canvas = _graphic.canvas;
-            if (!_rootTransform)  _rootTransform = _canvas.rootCanvas.transform.GetComponent<RectTransform>();
+            if (!_rootTransform && _canvas)  _rootTransform = _canvas.rootCanvas.transform.GetComponent<RectTransform>();
+            if (!_uiCamera && _rootTransform) _uiCamera = _rootTransform.GetComponent<Canvas>().worldCamera; 
         }
 
 
@@ -212,16 +214,16 @@ namespace Unlink.LiquidGlassUI
             var mat = _graphic.materialForRendering; // per-instance instance used by UI
             if (!mat) return;
             
-            var canvasH = Mathf.Max(1f, _rootTransform.rect.height);
-            var canvasW = Mathf.Max(1f, _rootTransform.rect.width);
+            Vector2 sizePx, targetSizePx;
+            var rectUVOffset = CalcRectUVOffset01MinusHalf(_rt, _canvas, _uiCamera, out sizePx, out targetSizePx);
+            
+            // 你的 halfSize / radius / border 也建议用 sizePx 来算（更一致）
+            var canvasH = targetSizePx.y; // 用渲染目标高度做基准（和 shader 的 _ScreenParams.y 对齐） 
 
-            // Rect in pixels
-            var size = _rt.rect.size; // px
             // Normalize by canvas height, then half-size for SDF space
-            var halfSize = new Vector2((size.x * 0.5f) / canvasH, (size.y * 0.5f) / canvasH);
+            var halfSize = new Vector2(sizePx.x * 0.5f / canvasH, sizePx.y * 0.5f / canvasH);
             var radius = Mathf.Max(0f, cornerRadiusPx) / canvasH;
             var border = Mathf.Max(0f, borderWidthPx) / canvasH;
-            var rectUVOffset = new Vector2(_rt.anchoredPosition.x / canvasW, _rt.anchoredPosition.y / canvasH);
 
             _bgRT = UICaptureEffectManager.Instance?.GetRenderTexture(backgroundRTName);
             _blurRT = UICaptureEffectManager.Instance?.GetBlurRenderTexture(backgroundRTName);
@@ -264,7 +266,52 @@ namespace Unlink.LiquidGlassUI
             mat.SetColor(ID_RimLightColor, rimLight);
             mat.SetColor(ID_TintColor, glassTint);
         }
-        
+        // 世界角点求中心 → 转屏幕像素 → 转 UV
+        static Vector2 CalcRectUVOffset01MinusHalf(RectTransform rt, Canvas canvas, Camera uiCam,
+            out Vector2 sizePx, out Vector2 targetSizePx)
+        {
+            // 1) 取世界角点（包含父节点、锚点、缩放、旋转等所有变换）
+            var corners = new Vector3[4];
+            rt.GetWorldCorners(corners);
+
+            // 2) 元素中心点（世界）
+            var centerWorld = (corners[0] + corners[2]) * 0.5f;
+
+            // 3) 投影到屏幕像素坐标
+            Vector2 centerPx;
+            if (canvas.renderMode == RenderMode.ScreenSpaceOverlay || uiCam == null)
+            {
+                // Overlay：世界坐标已经在屏幕平面内（但仍建议走 RectTransformUtility）
+                RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                    canvas.transform as RectTransform,
+                    RectTransformUtility.WorldToScreenPoint(null, centerWorld),
+                    null,
+                    out _); // 这里不需要 local 点
+                centerPx = RectTransformUtility.WorldToScreenPoint(null, centerWorld);
+            }
+            else
+            {
+                centerPx = RectTransformUtility.WorldToScreenPoint(uiCam, centerWorld);
+            }
+
+            // 4) 目标渲染尺寸（用于把像素转 UV）
+            //    最正确：用 uiCam 的 pixelRect（考虑 viewport）；否则用 Screen
+            Rect pr = (uiCam != null) ? uiCam.pixelRect : new Rect(0,0,Screen.width, Screen.height);
+            targetSizePx = new Vector2(pr.width, pr.height);
+
+            // 5) 计算该元素屏幕像素尺寸（用于 halfSize）
+            Vector2 p0 = RectTransformUtility.WorldToScreenPoint(uiCam, corners[0]);
+            Vector2 p2 = RectTransformUtility.WorldToScreenPoint(uiCam, corners[2]);
+            sizePx = new Vector2(Mathf.Abs(p2.x - p0.x), Mathf.Abs(p2.y - p0.y));
+
+            // 6) 转 UV（0..1）并减 0.5 → -0.5..0.5
+            //    注意：centerPx 是全屏坐标，要减去 pixelRect 的 origin
+            Vector2 centerInRect = centerPx - new Vector2(pr.xMin, pr.yMin);
+            Vector2 uv01 = new Vector2(centerInRect.x / targetSizePx.x, centerInRect.y / targetSizePx.y);
+
+            return uv01 - new Vector2(0.5f, 0.5f);
+        }
+ 
         private void ReleaseInstancedMaterial()
         {
             if (_instancedMat == null) return;
