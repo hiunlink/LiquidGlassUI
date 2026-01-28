@@ -153,6 +153,7 @@ namespace Unlink.LiquidGlassUI
         private void UpdateRendererFeature()
         {
             FindLiquidGlassAndUpdateStates();
+            UIScreenManager.Instance.UpdateUIScreens();
             UIScreenManager.Instance.UpdateRendererFeature(true);
         }
     }

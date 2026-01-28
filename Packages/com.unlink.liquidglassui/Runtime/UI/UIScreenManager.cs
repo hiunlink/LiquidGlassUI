@@ -40,6 +40,7 @@ namespace Unlink.LiquidGlassUI
         
         private readonly List<UICaptureComposePerLayerFeature.LayerConfig> _featureLayerConfigPool = new();
         private readonly List<WrapCanvasConfig> _wrapCanvasConfigPool = new();
+        private readonly List<CanvasConfigWrapLayer> _wrapCanvasConfigLayerPool = new();
         private readonly List<UICaptureComposePerLayerFeature.LayerConfig> _featureLayerConfigs = new();
         private readonly List<WrapCanvasConfig> _wrapCanvasConfigs = new();
 
@@ -58,6 +59,16 @@ namespace Unlink.LiquidGlassUI
         {
             AddUIScreen(screenConfig);
             UpdateRendererFeature();
+        }
+
+        public void UpdateUIScreens()
+        {
+            _screens.Clear();
+            var screens = GameObject.FindObjectsOfType<UIScreen>();
+            foreach (var screen in screens)
+            {
+                _screens.Add(screen);
+            }
         }
                 
         public void UpdateRendererFeature(bool sortScreen = false)
@@ -242,23 +253,69 @@ namespace Unlink.LiquidGlassUI
             }
             
         }
+
+        private int CompareHierarchy(CanvasConfigWrapLayer lhs, CanvasConfigWrapLayer rhs)
+        {
+            var lTrans = lhs.canvasConfig.canvas.transform;
+            var rTrans = rhs.canvasConfig.canvas.transform;
+            return CompareHierarchy(lTrans, rTrans);
+        }
         private int CompareHierarchy(UIScreen x, UIScreen y)
+        {
+            return CompareHierarchy(x.transform, y.transform);
+        }
+        List<Transform> _xParents = new ();
+        List<Transform> _yParents = new ();
+        private int CompareHierarchy(Transform x, Transform y)
         {
             if (!x || !y)
                 return 0;
-            if (x.transform.IsChildOf(y.transform) )
+            if (x.IsChildOf(y) )
                 return 1;
 
-            if (y.transform.IsChildOf(x.transform))
+            if (y.IsChildOf(x))
                 return -1;
-            if (y.transform.parent == x.transform.parent)
+            if (y.parent == x.parent)
             {
-                var val1 = x.transform.GetSiblingIndex();
-                var val2 = y.transform.GetSiblingIndex();
+                var val1 = x.GetSiblingIndex();
+                var val2 = y.GetSiblingIndex();
                 return val1 - val2;
             }
+            // 由根点往下判断各自父节点的先后关系
+            else
+            {
+                // 共同父节点
+                FindParents(x, ref _xParents);
+                FindParents(y, ref _yParents); 
+                Transform xSibling = null;
+                Transform ySibling = null;
+                for (var i = 0; i < _xParents.Count; i++)
+                {
+                    var xParent = _xParents[i];
+                    if (_yParents.Contains(xParent))
+                    {
+                        xSibling = i > 0 ? _xParents[i - 1] : x;
+                        var ySiblingIndex = _yParents.IndexOf(xParent);
+                        ySibling = ySiblingIndex > 0 ? _yParents[ySiblingIndex - 1] : y;
+                        break;
+                    }
+                }
+                if (!xSibling || !ySibling) return 0;
+                var val1 = xSibling.GetSiblingIndex();
+                var val2 = ySibling.GetSiblingIndex();
+                return val1 - val2;
+            }
+        }
 
-            return 0;
+        private void FindParents(Transform trans, ref List<Transform> parents)
+        {
+            parents.Clear();
+            var cur = trans.parent; 
+            while (cur)
+            {
+                parents.Add(cur);
+                cur = cur.parent;
+            }
         }
 
         private void GetNextLayerLiquidGlassBlurConfig(UIScreen.CanvasConfig canvasConfig, LayerMask layer, ref GlobalBlurConfig result)
@@ -302,6 +359,14 @@ namespace Unlink.LiquidGlassUI
         private GlobalBlurConfig _nextLayerGlobalBlurConfig = new();
 
         private readonly List<int> _layers = new ();
+        private readonly List<int> _layerBeSet = new();
+        private readonly List<CanvasConfigWrapLayer> _sortCanvasConfigs = new();
+
+        private class CanvasConfigWrapLayer
+        {
+            public int layer;  
+            public UIScreen.CanvasConfig canvasConfig;
+        }
         private void InitLayerConfigs(UIScreen uiScreen, List<UICaptureComposePerLayerFeature.LayerConfig> configs, 
             ref int beginLayer)
         {
@@ -324,29 +389,46 @@ namespace Unlink.LiquidGlassUI
                 configs.Add(featureLayerConfig);
                 _layers.Add(layerIndex);
             }
-            for (var i = uiScreen.canvasConfigs.Count - 1; i >= 0; i--)
+            _layerBeSet.Clear();
+            // 排序
+            ClearCanvasConfigWrappers(_sortCanvasConfigs);
+            for (var i = 0; i < uiScreen.canvasConfigs.Count; i++)
             {
                 var canvasConfig = uiScreen.canvasConfigs[i];
-                if(i < _layers.Count)
-                    SetLayers(canvasConfig.canvas.gameObject, _layers[i]);
+                var canvasConfigWrapper = GetOrCreateCanvasConfigWrapLayer();
+                canvasConfigWrapper.layer = _layers[i];
+                canvasConfigWrapper.canvasConfig = canvasConfig;
+                
+                _sortCanvasConfigs.Add(canvasConfigWrapper);
+            }
+            _sortCanvasConfigs.Sort(CompareHierarchy);
+            for (var i = _sortCanvasConfigs.Count - 1; i >= 0; i--)
+            {
+                var canvasConfig = _sortCanvasConfigs[i];
+                if (i < _layers.Count)
+                {
+                    SetLayers(canvasConfig.canvasConfig.canvas.gameObject, canvasConfig.layer, _layerBeSet);
+                    _layerBeSet.Add(canvasConfig.layer);
+                }
                 else
                 {
-                    SetLayers(canvasConfig.canvas.gameObject, _hiddenLayer);
+                    SetLayers(canvasConfig.canvasConfig.canvas.gameObject, _hiddenLayer, _layerBeSet);
                 }
             }
             // update begin layer index
             beginLayer += uiScreen.canvasConfigs.Count; 
         }
 
-        private void SetLayers(GameObject go, LayerMask layer)
+        private void SetLayers(GameObject go, LayerMask layer, List<int> layerBeSet)
         {
             for (var i = 0; i < go.transform.childCount; i++)
             {
                 var child = go.transform.GetChild(i);
-                SetLayers(child.gameObject, layer);
+                SetLayers(child.gameObject, layer, layerBeSet);
             }
-
-            go.layer = layer;
+            // 过滤已经设置的层
+            if (!layerBeSet.Contains(go.layer))
+                go.layer = layer;
         }
 
         private bool CheckLayerIsValid(int layer)
@@ -382,6 +464,15 @@ namespace Unlink.LiquidGlassUI
             wrapCanvasConfigs.Clear();
         }
 
+        private void ClearCanvasConfigWrappers(List<CanvasConfigWrapLayer> canvasConfigWrappers)
+        {
+            for (var i = 0; i < canvasConfigWrappers.Count; i++)
+            {
+                _wrapCanvasConfigLayerPool.Add(canvasConfigWrappers[i]);
+            } 
+            canvasConfigWrappers.Clear();
+        }
+
         private WrapCanvasConfig GetOrCreateWrapCanvasConfig()
         {
             WrapCanvasConfig result;
@@ -412,6 +503,21 @@ namespace Unlink.LiquidGlassUI
                 result = new UICaptureComposePerLayerFeature.LayerConfig();
             }
 
+            return result;
+        }
+
+        private CanvasConfigWrapLayer GetOrCreateCanvasConfigWrapLayer()
+        {
+            CanvasConfigWrapLayer result;
+            if (_wrapCanvasConfigLayerPool.Count > 0)
+            {
+               result = _wrapCanvasConfigLayerPool[0];
+               _wrapCanvasConfigLayerPool.RemoveAt(0);
+            }
+            else
+            {
+                result = new CanvasConfigWrapLayer();
+            }
             return result;
         }
 
