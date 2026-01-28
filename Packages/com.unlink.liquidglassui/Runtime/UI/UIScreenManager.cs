@@ -124,8 +124,9 @@ namespace Unlink.LiquidGlassUI
                 var canvasConfig = wrapConfig.canvasConfig;
                 // RenderTexture
                 var nextConfig = i+1< _wrapCanvasConfigs.Count ? _wrapCanvasConfigs[i+1] : null;
-                var nextLayerHasLiquidGlass = nextConfig != null && nextConfig.canvasConfig.hasLiquidGlass;
-                var changeRt = i == 0 || canvasConfig.hasLiquidGlass;
+                var nextLayerHasLiquidGlass = nextConfig != null && 
+                                              nextConfig.canvasConfig.HasLiquidGlasses(nextConfig.canvasConfig.canvas.gameObject.layer);
+                var changeRt = i == 0 || canvasConfig.HasLiquidGlasses(canvasConfig.canvas.gameObject.layer);
                 if (changeRt) _rtIndex++;
                 var rtName = GetRtName(_rtIndex);
                 featureLayerConfig.globalTextureName = rtName;
@@ -370,6 +371,9 @@ namespace Unlink.LiquidGlassUI
         private void InitLayerConfigs(UIScreen uiScreen, List<UICaptureComposePerLayerFeature.LayerConfig> configs, 
             ref int beginLayer)
         {
+            _layerBeSet.Clear();
+            // 全部Layer清除
+            SetLayers(uiScreen.gameObject, _hiddenLayer, _layerBeSet);
             _layers.Clear();
             for (var i = 0; i < uiScreen.canvasConfigs.Count; i++)
             {
@@ -389,7 +393,6 @@ namespace Unlink.LiquidGlassUI
                 configs.Add(featureLayerConfig);
                 _layers.Add(layerIndex);
             }
-            _layerBeSet.Clear();
             // 排序
             ClearCanvasConfigWrappers(_sortCanvasConfigs);
             for (var i = 0; i < uiScreen.canvasConfigs.Count; i++)

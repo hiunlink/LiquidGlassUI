@@ -33,9 +33,6 @@ namespace Unlink.LiquidGlassUI
             [Tooltip("该层是否需要模糊")]
             public bool blur = false;
 
-            [HideInInspector]
-            public bool hasLiquidGlass;
-
             [ShowIf("blur")] 
             public CanvasBlurConfig blurConfig;
 
@@ -46,6 +43,19 @@ namespace Unlink.LiquidGlassUI
                 _cachedLiquidGlasses = liquidGlasses;
             }
             public LiquidGlassUIEffect[] cachedLiquidGlasses => _cachedLiquidGlasses;
+
+
+            public bool HasLiquidGlasses(int layer)
+            {
+                foreach (var liquidGlass in _cachedLiquidGlasses)
+                {
+                    if (liquidGlass.gameObject.layer == layer)
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
         }
         [Header("是否开启底层模糊效果")]
         public bool lowerBlur = true;
@@ -132,7 +142,6 @@ namespace Unlink.LiquidGlassUI
             {
                 var glassUIEffects = canvasConfig.canvas.transform.GetComponentsInChildren<LiquidGlassUIEffect>();
                 canvasConfig.SetCachedLiquidGlasses(glassUIEffects);
-                canvasConfig.hasLiquidGlass = glassUIEffects.Length > 0;
             }
         }
 
