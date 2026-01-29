@@ -52,6 +52,14 @@ namespace Unlink.LiquidGlassUI
             _startLayer = config.layerStart;
             _endLayer = config.layerEnd;
             _hiddenLayer = config.hiddenLayer;
+            Graphic.OnRebuild += OnElementRebuild;
+        }
+
+        private void OnElementRebuild(Graphic graphic, CanvasUpdate update)
+        {
+           if (!graphic) return;
+           var layer = graphic.gameObject.layer;
+           UICaptureEffectManager.Instance?.SetDirty(1 << layer, true);
         }
         #region Public
 

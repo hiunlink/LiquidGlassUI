@@ -164,7 +164,8 @@ namespace Unlink.LiquidGlassUI
             if (!_uiCamera && _rootTransform) _uiCamera = _rootTransform.GetComponent<Canvas>().worldCamera; 
         }
 
-
+        bool _needNewChecked = false;
+        bool _keyWordChecked = false;
         void EnsureMaterial()
         {
             if (_graphic == null) _graphic = GetComponent<Graphic>();
@@ -180,6 +181,7 @@ namespace Unlink.LiquidGlassUI
                 // 如果 shared 是别的系统共用材质，你希望每个控件单独参数，则必须实例化
                 shared == _graphic.defaultMaterial;
 
+            _needNewChecked = true;
             if (!needNew) return;
 
             // 释放旧实例
@@ -227,14 +229,20 @@ namespace Unlink.LiquidGlassUI
 
             _bgRT = UICaptureEffectManager.Instance?.GetRenderTexture(backgroundRTName);
             _blurRT = UICaptureEffectManager.Instance?.GetBlurRenderTexture(backgroundRTName);
-            if (mat.shader.keywordSpace.keywordNames.Contains("WITHOUT_UI_BG"))
-                KW_WITHOUT_BG = new LocalKeyword(mat.shader, "WITHOUT_UI_BG");
-            else
+            if (_needNewChecked && !_keyWordChecked)
             {
-                KW_WITHOUT_BG = new LocalKeyword();
+                if (mat.shader.keywordSpace.keywordNames.Contains("WITHOUT_UI_BG"))
+                    KW_WITHOUT_BG = new LocalKeyword(mat.shader, "WITHOUT_UI_BG");
+                else
+                {
+                    KW_WITHOUT_BG = new LocalKeyword();
+                }
+
+                _keyWordChecked = true;
             }
             if (KW_WITHOUT_BG == default)
                 return;
+
             if (!_bgRT || !_blurRT || blurAlgorithm == BlurEffectType.None)
             {
                 mat.EnableKeyword(KW_WITHOUT_BG);
@@ -266,13 +274,13 @@ namespace Unlink.LiquidGlassUI
             mat.SetColor(ID_RimLightColor, rimLight);
             mat.SetColor(ID_TintColor, glassTint);
         }
+        static Vector3[] corners = new Vector3[4];
         // 世界角点求中心 → 转屏幕像素 → 转 UV
         static Vector2 CalcRectUVOffset01MinusHalf(RectTransform rt, Canvas canvas, Camera uiCam,
             out Vector2 sizePx, out Vector2 targetSizePx)
         {
             // 1) 取世界角点（包含父节点、锚点、缩放、旋转等所有变换）
-            var corners = new Vector3[4];
-            rt.GetWorldCorners(corners);
+           rt.GetWorldCorners(corners);
 
             // 2) 元素中心点（世界）
             var centerWorld = (corners[0] + corners[2]) * 0.5f;

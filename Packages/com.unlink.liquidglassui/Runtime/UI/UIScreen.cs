@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -102,7 +103,7 @@ namespace Unlink.LiquidGlassUI
             }
         }
 #endif
-        
+
         private void Init()
         {
             _gid = gameObject.GetInstanceID();
@@ -140,7 +141,7 @@ namespace Unlink.LiquidGlassUI
         {
             foreach (var canvasConfig in canvasConfigs)
             {
-                var glassUIEffects = canvasConfig.canvas.transform.GetComponentsInChildren<LiquidGlassUIEffect>();
+                var glassUIEffects = canvasConfig.canvas.transform.GetComponentsInChildren<LiquidGlassUIEffect>(true);
                 canvasConfig.SetCachedLiquidGlasses(glassUIEffects);
             }
         }
