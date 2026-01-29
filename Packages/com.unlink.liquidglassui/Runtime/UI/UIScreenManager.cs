@@ -52,7 +52,9 @@ namespace Unlink.LiquidGlassUI
             _startLayer = config.layerStart;
             _endLayer = config.layerEnd;
             _hiddenLayer = config.hiddenLayer;
+#if GRAPHIC_ON_REBUILD
             Graphic.OnRebuild += OnElementRebuild;
+#endif
         }
 
         private void OnElementRebuild(Graphic graphic, CanvasUpdate update)
