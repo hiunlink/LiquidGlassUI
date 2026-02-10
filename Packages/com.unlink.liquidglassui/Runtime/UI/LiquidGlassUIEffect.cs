@@ -120,9 +120,9 @@ namespace Unlink.LiquidGlassUI
         }
 #endif
 
-        protected override void OnDisable()
+        protected override void OnDestroy()
         {
-            base.OnDisable();
+            base.OnDestroy();
             ReleaseInstancedMaterial();
         }
 
