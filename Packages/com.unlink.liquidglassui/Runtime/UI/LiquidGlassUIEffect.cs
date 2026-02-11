@@ -204,8 +204,21 @@ namespace Unlink.LiquidGlassUI
             forceRecreateMaterial = false;
         }
 
+#if UNITY_EDITOR
+        static bool ShouldPauseInEditor()
+        {
+            if (EditorApplication.isCompiling) return true;
+            if (EditorApplication.isUpdating) return true; // 资源刷新/导入等
+            if (BuildPipeline.isBuildingPlayer) return true; // 只覆盖 Build Player
+            return false;
+        }
+#endif
         void ApplyParameters()
         {
+            #if UNITY_EDITOR
+            if (ShouldPauseInEditor())
+                return;
+            #endif
             CacheComponents();
             if (!_graphic) return;
             if (!_rt) _rt = GetComponent<RectTransform>();
